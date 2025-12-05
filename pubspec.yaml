@@ -37,7 +37,7 @@ dependencies:
   bloc: ^9.1.0
   flutter_bloc: ^9.1.1
   shared_preferences: ^2.5.3
-  get_it: ^9.1.1
+  get_it: ^9.2.0
   firebase_core: ^4.2.1
   firebase_auth: ^6.1.2
   cloud_firestore: ^6.1.0
@@ -76,6 +76,7 @@ flutter:
     - assets/images/
     - assets/emoji/
     - assets/translations/
+    - assets/screenshots/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

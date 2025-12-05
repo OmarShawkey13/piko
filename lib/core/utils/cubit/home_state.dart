@@ -90,6 +90,8 @@ class SearchErrorState extends HomeStates {
   SearchErrorState(this.error);
 }
 
+class HomeChatSelectionChangedState extends HomeStates {}
+
 //chat
 class ChatMessagesLoadingState extends HomeStates {}
 

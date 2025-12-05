@@ -13,6 +13,7 @@ class IosStyleContextMenu extends StatefulWidget {
   final Color? backgroundColor;
   final Color? dividerColor;
   final Color? iconColor;
+  final AlignmentGeometry? menuAlignment;
   final EdgeInsetsGeometry? contentPadding;
   final double? textSize;
   final double? iconSize;
@@ -26,6 +27,7 @@ class IosStyleContextMenu extends StatefulWidget {
     this.backgroundColor,
     this.dividerColor,
     this.iconColor,
+    this.menuAlignment,
     this.contentPadding,
     this.textSize,
     this.iconSize,
@@ -157,173 +159,170 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(color: Colors.black.withValues(alpha: 0.15)),
             ),
-            GestureDetector(
-              onTap: () {},
-              child: SafeArea(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ScaleTransition(
-                      scale: Tween<double>(begin: 0.8, end: 1.0).animate(
-                        CurvedAnimation(
-                          parent: childController,
-                          curve: Curves.easeInExpo,
-                        ),
+            SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ScaleTransition(
+                    scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+                      CurvedAnimation(
+                        parent: childController,
+                        curve: Curves.easeInExpo,
                       ),
-                      child: FadeTransition(
-                        opacity: childOpacity,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth:
-                                MediaQuery.of(context).size.width *
-                                0.8, // ⬅ يمنع زيادة العرض
-                            maxHeight:
-                                MediaQuery.of(context).size.height *
-                                0.4, // ⬅ يمنع زيادة الطول
-                          ),
-                          child: SingleChildScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            child: widget.child,
-                          ),
+                    ),
+                    child: FadeTransition(
+                      opacity: childOpacity,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth:
+                              MediaQuery.of(context).size.width *
+                              0.8, // ⬅ يمنع زيادة العرض
+                          maxHeight:
+                              MediaQuery.of(context).size.height *
+                              0.4, // ⬅ يمنع زيادة الطول
+                        ),
+                        child: SingleChildScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          child: widget.child,
                         ),
                       ),
                     ),
-                    verticalSpace12,
-                    Padding(
-                      padding:
-                          widget.contentPadding ??
-                          const EdgeInsets.symmetric(
-                            horizontal: 16,
-                          ),
-                      child: Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Container(
-                          width: 280,
-                          decoration: BoxDecoration(
-                            color: widget.isDark ?? false
-                                ? Colors.black.withValues(alpha: 0.9)
-                                : Colors.white.withValues(alpha: 0.7),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.1),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          // REMOVED Flexible here
-                          child: SingleChildScrollView(
-                            // <--- This is now the direct child of Container
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (menuStack.length > 1)
-                                  ListTile(
-                                    leading: const Icon(
-                                      Icons.arrow_back_ios_new_outlined,
-                                    ),
-                                    title: const Text("Back"),
-                                    onTap: closeSubMenu,
+                  ),
+                  verticalSpace12,
+                  Padding(
+                    padding:
+                        widget.contentPadding ??
+                        const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                    child: Align(
+                        alignment: widget.menuAlignment ?? Alignment.center,
+                      child: Container(
+                        width: 280,
+                        decoration: BoxDecoration(
+                          color: widget.isDark ?? false
+                              ? Colors.black.withValues(alpha: 0.9)
+                              : Colors.white.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        // REMOVED Flexible here
+                        child: SingleChildScrollView(
+                          // <--- This is now the direct child of Container
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (menuStack.length > 1)
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.arrow_back_ios_new_outlined,
                                   ),
-                                ...List.generate(currentMenu.length, (index) {
-                                  final action = currentMenu[index];
-                                  final isDelete = action.label
-                                      .toLowerCase()
-                                      .contains('delete');
-                                  return FadeTransition(
-                                    opacity: actionAnimations[index],
-                                    child: SlideTransition(
-                                      position: actionAnimations[index].drive(
-                                        Tween<Offset>(
-                                          begin: const Offset(0, 0.1),
-                                          end: Offset.zero,
-                                        ),
+                                  title: const Text("Back"),
+                                  onTap: closeSubMenu,
+                                ),
+                              ...List.generate(currentMenu.length, (index) {
+                                final action = currentMenu[index];
+                                final isDelete = action.label
+                                    .toLowerCase()
+                                    .contains('delete');
+                                return FadeTransition(
+                                  opacity: actionAnimations[index],
+                                  child: SlideTransition(
+                                    position: actionAnimations[index].drive(
+                                      Tween<Offset>(
+                                        begin: const Offset(0, 0.1),
+                                        end: Offset.zero,
                                       ),
-                                      child: Column(
-                                        children: [
-                                          InkWell(
-                                            onTap: () async {
-                                              if (action.hasSubMenu) {
-                                                openSubMenu(action.subMenu!);
-                                              } else {
-                                                await menuController.reverse();
-                                                await childController.reverse();
-                                                if (context.mounted) {
-                                                  context.pop;
-                                                  action.onTap?.call();
-                                                }
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        InkWell(
+                                          onTap: () async {
+                                            if (action.hasSubMenu) {
+                                              openSubMenu(action.subMenu!);
+                                            } else {
+                                              await menuController.reverse();
+                                              await childController.reverse();
+                                              if (context.mounted) {
+                                                context.pop;
+                                                action.onTap?.call();
                                               }
-                                            },
-                                            borderRadius: index == 0
-                                                ? const BorderRadius.vertical(
-                                                    top: Radius.circular(16),
-                                                  )
-                                                : index ==
-                                                      currentMenu.length - 1
-                                                ? const BorderRadius.vertical(
-                                                    bottom: Radius.circular(
-                                                      16,
-                                                    ),
-                                                  )
-                                                : BorderRadius.zero,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 12,
-                                                    horizontal: 20,
+                                            }
+                                          },
+                                          borderRadius: index == 0
+                                              ? const BorderRadius.vertical(
+                                                  top: Radius.circular(16),
+                                                )
+                                              : index ==
+                                                    currentMenu.length - 1
+                                              ? const BorderRadius.vertical(
+                                                  bottom: Radius.circular(
+                                                    16,
                                                   ),
-                                              width: double.infinity,
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Text(
-                                                    action.label,
-                                                    style: getTextStyle(
-                                                      context,
-                                                      isDelete,
-                                                    ),
+                                                )
+                                              : BorderRadius.zero,
+                                          child: Container(
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                                  vertical: 12,
+                                                  horizontal: 20,
+                                                ),
+                                            width: double.infinity,
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  action.label,
+                                                  style: getTextStyle(
+                                                    context,
+                                                    isDelete,
                                                   ),
-                                                  Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Icon(
-                                                        action.icon,
-                                                        color: getIconColor(
-                                                          isDelete,
-                                                        ),
+                                                ),
+                                                Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      action.icon,
+                                                      color: getIconColor(
+                                                        isDelete,
                                                       ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                          if (index != currentMenu.length - 1)
-                                            Divider(
-                                              height: 1,
-                                              color:
-                                                  widget.dividerColor ??
-                                                  (widget.isDark ?? false
-                                                      ? Colors.white12
-                                                      : Colors.grey[300]),
-                                            ),
-                                        ],
-                                      ),
+                                        ),
+                                        if (index != currentMenu.length - 1)
+                                          Divider(
+                                            height: 1,
+                                            color:
+                                                widget.dividerColor ??
+                                                (widget.isDark ?? false
+                                                    ? Colors.white12
+                                                    : Colors.grey[300]),
+                                          ),
+                                      ],
                                     ),
-                                  );
-                                }),
-                              ],
-                            ),
+                                  ),
+                                );
+                              }),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],

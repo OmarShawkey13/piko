@@ -11,12 +11,20 @@ class ColorsManager {
   static const Color lightCard = Colors.white;
   static const Color lightTextPrimary = Color(0xFF1B1B1D);
   static const Color lightTextSecondary = Color(0xFF6F6F79);
+  static const Color bubbleMeLight = Color(0xFF4A56E2); // primary
+  static const Color bubbleMeLightText = Colors.white;
+  static const Color bubbleOtherLight = Color(0xFFF0F1F5); // أفتح من lightCard
+  static const Color bubbleOtherLightText = Color(0xFF1B1B1D); // lightTextPrimary
 
   // -------- DARK THEME -------- //
   static const Color darkBackground = Color(0xFF121212);
   static const Color darkCard = Color(0xFF1E1E1E);
   static const Color darkTextPrimary = Color(0xFFEDEDED);
   static const Color darkTextSecondary = Color(0xFF9D9DA6);
+  static const Color bubbleMeDark = Color(0xFF4A56E2); // primary نفسها
+  static const Color bubbleMeDarkText = Colors.white;
+  static const Color bubbleOtherDark = Color(0xFF1E1E1E); // darkCard
+  static const Color bubbleOtherDarkText = Color(0xFFEDEDED); // darkTextPrimary
 
   // -------- SHARED -------- //
   static const Color success = Color(0xFF4CAF50);

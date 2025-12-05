@@ -105,8 +105,8 @@ class ChatItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    chat.displayName,
+                  EmojiText(
+                    text: chat.displayName,
                     style: TextStylesManager.bold16.copyWith(
                       color: homeCubit.isDarkMode
                           ? ColorsManager.darkTextPrimary

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:piko/core/models/message_model.dart';
+import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/expandable_emoji_text.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
+import 'package:piko/core/utils/cubit/home_cubit.dart';
 import 'package:piko/features/chat/data/model/context_menu.dart';
 import 'package:piko/features/chat/presentation/widgets/image_preview_page.dart';
 import 'package:piko/features/chat/presentation/widgets/ios_style_context_menu.dart';
@@ -31,8 +33,20 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DateTime time = DateTime.fromMillisecondsSinceEpoch(msg.timestamp);
-    final bubbleColor = isMe ? Colors.lightBlue.shade600 : Colors.grey.shade100;
-    final textColor = isMe ? Colors.white : Colors.black87;
+    final bubbleColor = isMe
+        ? homeCubit.isDarkMode
+              ? ColorsManager.bubbleMeDark
+              : ColorsManager.bubbleMeLight
+        : homeCubit.isDarkMode
+        ? ColorsManager.bubbleOtherDark
+        : ColorsManager.bubbleOtherLight;
+    final textColor = isMe
+        ? homeCubit.isDarkMode
+              ? ColorsManager.bubbleMeDarkText
+              : ColorsManager.bubbleMeLightText
+        : homeCubit.isDarkMode
+        ? ColorsManager.bubbleOtherDarkText
+        : ColorsManager.bubbleOtherLightText;
     final radius = BorderRadius.only(
       topLeft: const Radius.circular(16),
       topRight: const Radius.circular(16),
@@ -155,6 +169,7 @@ class MessageBubble extends StatelessWidget {
   }
 
   void _showIosContextMenu(BuildContext context) {
+    final alignment = isMe ? Alignment.topRight : Alignment.topLeft;
     showDialog<Object>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.15),
@@ -176,13 +191,14 @@ class MessageBubble extends StatelessWidget {
               },
             ),
             ContextMenuAndroid(
-              label: appTranslation().get("reply"),
-              icon: Icons.reply,
+              label: appTranslation().get("edit"),
+              icon: Icons.edit,
               onTap: () {
-                // homeCubit.setReply(msg);
+                // homeCubit.editMsg(msg);
               },
             ),
           ],
+          menuAlignment: alignment,
           child: MessageBubble(
             msg: msg,
             isMe: isMe,
