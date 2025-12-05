@@ -1,0 +1,15 @@
+flutter_native_splash:
+  color: "#F6F7FB"               # لون مؤقت فقط عشان ما يعطي خطأ
+  image: "assets/images/logo.png"
+  color_dark: "#121212"
+  image_dark: "assets/images/logo.png"
+
+  android: true
+  android_12:
+    color: "#F6F7FB"             # نفس الفكرة، لون بسيط مؤقت
+    color_dark: "#121212"
+    image: "assets/images/logo.png"
+    image_dark: "assets/images/logo.png"
+
+  web: false
+  ios: false

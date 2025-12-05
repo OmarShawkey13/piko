@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "876558748618",
+    "project_id": "piko-ce586",
+    "storage_bucket": "piko-ce586.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:876558748618:android:636f17c5d8443b66b05d33",
+        "android_client_info": {
+          "package_name": "com.example.piko"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOQSjkNiATLLhYAzfdE3_7NllSWVtFeOI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
