@@ -99,7 +99,7 @@ This layout helps keep features self-contained and easier to test.
 
 ```bash
 # Clone
-git clone https://github.com/<your-username>/piko.git
+git clone https://github.com/omarShawkey13/piko.git
 cd piko
 
 # Install
