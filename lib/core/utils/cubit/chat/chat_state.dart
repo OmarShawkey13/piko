@@ -35,3 +35,10 @@ class ChatUploadImageErrorState extends ChatStates {
 class TypingStatusChangedState extends ChatStates {}
 
 class ChatReplyingMessageChangedState extends ChatStates {}
+
+class ChatDeleteMessageSuccessState extends ChatStates {}
+
+class ChatDeleteMessageErrorState extends ChatStates {
+  final String error;
+  ChatDeleteMessageErrorState(this.error);
+}

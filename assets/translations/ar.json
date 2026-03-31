@@ -52,12 +52,15 @@
   "just_now": "الآن",
   "minutes_ago": "منذ {n} دقيقة",
   "hours_ago": "منذ {n} ساعة",
-  "last_seen_at": "آخر ظهور {time}",
   "chat_background": "خلفية المحادثة",
   "reply": "رد",
   "search": "بحث",
   "search_hint": "ابحث باسم المستخدم...",
   "no_user_found": "لم يتم العثور على مستخدم بهذا الاسم",
   "something_went_wrong": "حدث خطأ ما",
-  "search_start_typing": "اكتب اسم المستخدم لبدء البحث"
+  "search_start_typing": "اكتب اسم المستخدم لبدء البحث",
+  "delete_message_confirm": "هل أنت متأكد من حذف هذه الرسالة؟",
+  "delete_for_me": "حذف لدي",
+  "delete_for_everyone": "حذف لدى الجميع",
+  "yesterday": "أمس"
 }

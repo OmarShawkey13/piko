@@ -52,12 +52,15 @@
   "just_now": "Just now",
   "minutes_ago": "{n}m ago",
   "hours_ago": "{n}h ago",
-  "last_seen_at": "Last seen at {time}",
   "chat_background": "Chat Background",
   "reply": "Reply",
   "search": "Search",
   "search_hint": "Search by username...",
   "no_user_found": "No user found with this username",
   "something_went_wrong": "Something went wrong",
-  "search_start_typing": "Type a username to start searching"
+  "search_start_typing": "Type a username to start searching",
+  "delete_message_confirm": "Are you sure you want to delete this message?",
+  "delete_for_me": "Delete for me",
+  "delete_for_everyone": "Delete for everyone",
+  "yesterday": "Yesterday"
 }

@@ -69,9 +69,12 @@ class _MessagesListState extends State<MessagesList> {
               );
             }
 
-            final msgIndex = widget.isPreview ? messages.length - 1 - index : messages.length - index;
-            if (msgIndex < 0 || msgIndex >= messages.length) return const SizedBox();
-            
+            final msgIndex = widget.isPreview
+                ? messages.length - 1 - index
+                : messages.length - index;
+            if (msgIndex < 0 || msgIndex >= messages.length) {
+              return const SizedBox();
+            }
             final msg = messages[msgIndex];
             final isMe = msg.senderId == widget.myId;
 
@@ -92,7 +95,9 @@ class _MessagesListState extends State<MessagesList> {
               key: key,
               msg: msg,
               isMe: isMe,
-              onReplyTap: widget.isPreview ? null : (replyId) => scrollToMessage(replyId),
+              onReplyTap: widget.isPreview
+                  ? null
+                  : (replyId) => scrollToMessage(replyId),
             );
           },
         );

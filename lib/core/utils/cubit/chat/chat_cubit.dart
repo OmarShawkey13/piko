@@ -289,6 +289,100 @@ class ChatCubit extends Cubit<ChatStates> {
     }
   }
 
+  Future<void> deleteMessage({
+    required String myId,
+    required String otherId,
+    required String messageId,
+    required bool deleteForEveryone,
+  }) async {
+    try {
+      // 1. Handle deletion for me
+      await _handleSingleDeletion(
+        ownerId: myId,
+        otherId: otherId,
+        messageId: messageId,
+      );
+
+      if (deleteForEveryone) {
+        // 2. Handle deletion for other
+        await _handleSingleDeletion(
+          ownerId: otherId,
+          otherId: myId,
+          messageId: messageId,
+        );
+      }
+
+      emit(ChatDeleteMessageSuccessState());
+    } catch (e) {
+      emit(ChatDeleteMessageErrorState(e.toString()));
+    }
+  }
+
+  // الجزء المطور من كود الحذف في ChatCubit.dart
+
+  Future<void> _handleSingleDeletion({
+    required String ownerId,
+    required String otherId,
+    required String messageId,
+  }) async {
+    final chatRef = _firestore
+        .collection("users")
+        .doc(ownerId)
+        .collection("chats")
+        .doc(otherId);
+
+    // 1. الحصول على بيانات الرسالة قبل حذفها للتحقق من الحالة
+    final msgDoc = await chatRef.collection("messages").doc(messageId).get();
+    bool wasUnseen = false;
+    if (msgDoc.exists) {
+      final data = msgDoc.data()!;
+      // إذا كانت الرسالة مستلمة ولم تُقرأ بعد
+      wasUnseen = data['seen'] == false && data['senderId'] != ownerId;
+    }
+
+    // 2. حذف الرسالة فعلياً من المجموعة الفرعية
+    await chatRef.collection("messages").doc(messageId).delete();
+
+    // 3. تحديث عداد الرسائل غير المقروءة إذا لزم الأمر
+    if (wasUnseen) {
+      final chatSnap = await chatRef.get();
+      if (chatSnap.exists) {
+        final count = chatSnap.data()?['unreadCount'] ?? 0;
+        if (count > 0) {
+          await chatRef.update({'unreadCount': FieldValue.increment(-1)});
+        }
+      }
+    }
+
+    // 4. مزامنة ملخص الشات (الرسالة الأخيرة، التوقيت)
+    // نجلب آخر رسالتين للتأكد من أننا لا نأخذ الرسالة التي حذفناها للتو (في حال تأخر تحديث الفهرس)
+    final lastMessagesQuery = await chatRef
+        .collection("messages")
+        .orderBy("timestamp", descending: true)
+        .limit(2)
+        .get();
+
+    // تصفية النتائج لاستبعاد الرسالة المحذوفة
+    final List<QueryDocumentSnapshot> remainingDocs = lastMessagesQuery.docs
+        .where((doc) => doc.id != messageId)
+        .toList();
+
+    if (remainingDocs.isEmpty) {
+      // لا توجد رسائل متبقية -> حذف ملخص المحادثة بالكامل لتختفي من القائمة
+      await chatRef.delete();
+    } else {
+      // توجد رسائل متبقية -> تحديث الملخص بأحدث رسالة فعلية موجودة
+      final newLastMsg = remainingDocs.first.data() as Map<String, dynamic>;
+      await chatRef.update({
+        'lastMessage': (newLastMsg["text"] as String?)?.isEmpty == true
+            ? "Attachment"
+            : newLastMsg["text"],
+        'timestamp': newLastMsg["timestamp"],
+        'imageUrl': newLastMsg["imageUrl"],
+      });
+    }
+  }
+
   // Typing Status
   Stream<bool> getTypingStatus(String myId, String otherId) {
     return _firestore

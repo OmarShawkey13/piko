@@ -64,10 +64,24 @@ class UserOnlineStatus extends StatelessWidget {
           .get("minutes_ago")
           .replaceAll("{n}", diff.inMinutes.toString());
     }
-    if (diff.inHours < 24) {
+
+    final isYesterday = now.day - date.day == 1 &&
+        now.month == date.month &&
+        now.year == date.year;
+
+    if (diff.inHours < 24 && !isYesterday) {
       return appTranslation()
           .get("hours_ago")
           .replaceAll("{n}", diff.inHours.toString());
+    }
+
+    String dayStr = "";
+    if (isYesterday) {
+      dayStr = "${appTranslation().get("yesterday")} ";
+    } else if (diff.inDays < 7) {
+      dayStr = "${date.day}/${date.month} ";
+    } else {
+      dayStr = "${date.day}/${date.month}/${date.year} ";
     }
 
     int hour = date.hour;
@@ -78,7 +92,6 @@ class UserOnlineStatus extends StatelessWidget {
     hour = hour % 12;
     if (hour == 0) hour = 12;
 
-    final timeStr = "$hour:$minute $period";
-    return appTranslation().get("last_seen_at").replaceAll("{time}", timeStr);
+    return "$dayStr$hour:$minute $period";
   }
 }

@@ -265,6 +265,13 @@ class MessageBubbleState extends State<MessageBubble> {
                 Clipboard.setData(ClipboardData(text: widget.msg.text));
               },
             ),
+            ContextMenuAndroid(
+              label: appTranslation().get("delete"),
+              icon: Icons.delete_outline,
+              onTap: () {
+                _showDeleteDialog(context);
+              },
+            ),
           ],
           menuAlignment: alignment,
           child: MessageBubble(
@@ -274,6 +281,48 @@ class MessageBubbleState extends State<MessageBubble> {
           ),
         );
       },
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    final chatCubit = ChatCubit.get(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(appTranslation().get("delete")),
+        content: Text(appTranslation().get("delete_message_confirm")),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(appTranslation().get("cancel")),
+          ),
+          if (widget.isMe)
+            TextButton(
+              onPressed: () {
+                chatCubit.deleteMessage(
+                  myId: widget.msg.senderId,
+                  otherId: widget.msg.receiverId,
+                  messageId: widget.msg.id,
+                  deleteForEveryone: true,
+                );
+                Navigator.pop(context);
+              },
+              child: Text(appTranslation().get("delete_for_everyone")),
+            ),
+          TextButton(
+            onPressed: () {
+              chatCubit.deleteMessage(
+                myId: widget.isMe ? widget.msg.senderId : widget.msg.receiverId,
+                otherId: widget.isMe ? widget.msg.receiverId : widget.msg.senderId,
+                messageId: widget.msg.id,
+                deleteForEveryone: false,
+              );
+              Navigator.pop(context);
+            },
+            child: Text(appTranslation().get("delete_for_me")),
+          ),
+        ],
+      ),
     );
   }
 }
