@@ -1,10 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
 
 class ImagePreviewPage extends StatelessWidget {
-  final String url;
+  final String imagePath;
+  final String heroTag;
 
-  const ImagePreviewPage({super.key, required this.url});
+  const ImagePreviewPage({
+    super.key,
+    required this.imagePath,
+    required this.heroTag,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,29 +27,12 @@ class ImagePreviewPage extends StatelessWidget {
       ),
       body: Center(
         child: Hero(
-          tag: url,
+          tag: heroTag,
           child: InteractiveViewer(
             maxScale: 4,
             minScale: 1,
-            child: Image.network(
-              url,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                final progress = loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
-                    : null;
-                return Center(
-                  child: SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: CircularProgressIndicator(
-                      value: progress,
-                      color: Colors.white,
-                    ),
-                  ),
-                );
-              },
+            child: Image.file(
+              File(imagePath),
               errorBuilder: (context, error, stackTrace) {
                 return const Center(
                   child: Icon(Icons.error, color: Colors.red, size: 50),

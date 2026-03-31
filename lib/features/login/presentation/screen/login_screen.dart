@@ -3,8 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:piko/core/utils/constants/routes.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
-import 'package:piko/core/utils/cubit/home_state.dart';
+import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
+import 'package:piko/core/utils/cubit/auth/auth_state.dart';
+import 'package:piko/core/utils/cubit/theme/theme_cubit.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
 import 'package:piko/features/login/presentation/widgets/email_field.dart';
 import 'package:piko/features/login/presentation/widgets/login_button.dart';
@@ -18,28 +19,28 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<HomeCubit, HomeStates>(
+    return BlocConsumer<AuthCubit, AuthStates>(
       buildWhen: (_, state) =>
-          state is HomeLoginLoadingState ||
-          state is HomeLoginSuccessState ||
-          state is HomeLoginErrorState,
+          state is AuthLoginLoadingState ||
+          state is AuthLoginSuccessState ||
+          state is AuthLoginErrorState,
       listener: (context, state) {
-        if (state is HomeLoginSuccessState) {
+        if (state is AuthLoginSuccessState) {
           if (state.newUser) {
             context.pushReplacement<Object>(Routes.completeProfile);
           } else {
             context.pushReplacement<Object>(Routes.home);
           }
-          homeCubit.emailController.clear();
-          homeCubit.passwordController.clear();
-        } else if (state is HomeLoginErrorState) {
+          authCubit.emailController.clear();
+          authCubit.passwordController.clear();
+        } else if (state is AuthLoginErrorState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.error)),
           );
         }
       },
       builder: (context, state) {
-        final isDark = homeCubit.isDarkMode;
+        final isDark = themeCubit.isDarkMode;
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: isDark
               ? SystemUiOverlayStyle.light
@@ -60,7 +61,7 @@ class LoginScreen extends StatelessWidget {
                       verticalSpace30,
                       LoginButton(
                         formKey: formKey,
-                        isLoading: state is HomeLoginLoadingState,
+                        isLoading: state is AuthLoginLoadingState,
                       ),
                     ],
                   ),

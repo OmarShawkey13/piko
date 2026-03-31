@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:piko/core/utils/constants/constants.dart';
+import 'package:piko/core/utils/constants/primary/conditional_builder.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
-import 'package:piko/core/utils/cubit/home_state.dart';
+import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
+import 'package:piko/core/utils/cubit/auth/auth_state.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -26,7 +27,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final user = homeCubit.currentUserModel!;
+    final user = authCubit.currentUserModel!;
 
     _nameController.text = user.displayName;
     _usernameController.text = user.username;
@@ -39,7 +40,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final picker = ImagePicker();
     final file = await picker.pickImage(source: ImageSource.gallery);
     if (file != null) {
-      final uploadedUrl = await homeCubit.uploadProfileImage(File(file.path));
+      final uploadedUrl = await authCubit.uploadProfileImage(File(file.path));
       setState(() {
         _photoUrl = uploadedUrl; // نحفظ اللينك
       });
@@ -48,12 +49,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<HomeCubit, HomeStates>(
+    return BlocConsumer<AuthCubit, AuthStates>(
       listener: (context, state) {
-        if (state is EditProfileSuccessState) context.pop;
+        if (state is AuthEditProfileSuccessState) context.pop;
       },
       builder: (context, state) {
-        final loading = state is EditProfileLoadingState;
+        final loading = state is AuthEditProfileLoadingState;
         return Scaffold(
           appBar: AppBar(
             title: Text(appTranslation().get('edit_profile')),
@@ -99,16 +100,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     onPressed: loading
                         ? null
                         : () {
-                            homeCubit.updateProfile(
+                            authCubit.updateProfile(
                               displayName: _nameController.text.trim(),
                               username: _usernameController.text.trim(),
                               bio: _bioController.text.trim(),
                               photoUrl: _photoUrl ?? "",
                             );
                           },
-                    child: loading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(appTranslation().get('save_changes')),
+                    child: ConditionalBuilder(
+                      loadingState: loading,
+                      loadingBuilder: (_) => const CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
+                      successBuilder: (_) =>
+                          Text(appTranslation().get('save_changes')),
+                    ),
                   ),
                 ),
               ],

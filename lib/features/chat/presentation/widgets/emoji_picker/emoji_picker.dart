@@ -1,36 +1,107 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-
-// ... (Your imports)
-import 'package:piko/core/theme/emoji_text.dart';
-import 'package:piko/core/theme/text_styles.dart';
+import 'package:piko/core/network/local/cache_helper.dart';
+import 'package:piko/core/theme/colors.dart';
+import 'package:piko/core/utils/constants/constants.dart';
+import 'package:piko/core/utils/cubit/theme/theme_cubit.dart';
+import 'package:piko/features/chat/presentation/widgets/emoji_picker/emoji_category_bar.dart';
+import 'package:piko/features/chat/presentation/widgets/emoji_picker/emoji_cell.dart';
 import 'package:piko/features/chat/presentation/widgets/emoji_picker/emoji_category.dart';
 
 class EmojiPicker extends StatefulWidget {
   final void Function(String emoji) onEmojiSelected;
 
-  const EmojiPicker({
-    super.key,
-    required this.onEmojiSelected,
-  });
+  const EmojiPicker({super.key, required this.onEmojiSelected});
 
   @override
   State<EmojiPicker> createState() => _EmojiPickerState();
 }
 
 class _EmojiPickerState extends State<EmojiPicker> {
-  // 💡 الحل 1: استخدام PageController للتحكم في التمرير
   late PageController _pageController;
   int selectedCategory = 0;
 
-  // تصفية الفئات مرة واحدة
-  final List<EmojiCategory> availableCategories = emojiCategories
-      .where((c) => c.emojis != null)
-      .toList();
+  final List<List<String>> processedCategories = [];
+  final Map<String, List<String>> emojiVariants = {};
+  List<String> recentEmojis = [];
 
   @override
   void initState() {
     super.initState();
+    _loadRecentEmojis();
     _pageController = PageController(initialPage: selectedCategory);
+    _initializeEmojis();
+  }
+
+  void _loadRecentEmojis() {
+    final String? encoded = CacheHelper.getData(key: "recent_emojis");
+    if (encoded != null) {
+      try {
+        recentEmojis = List<String>.from(jsonDecode(encoded));
+      } catch (e) {
+        recentEmojis = [];
+      }
+    }
+  }
+
+  void _saveRecentEmoji(String emoji) {
+    recentEmojis.remove(emoji);
+    recentEmojis.insert(0, emoji);
+    if (recentEmojis.length > 40) {
+      recentEmojis = recentEmojis.sublist(0, 40);
+    }
+    CacheHelper.saveData(key: "recent_emojis", value: jsonEncode(recentEmojis));
+
+    if (emojiCategories.isNotEmpty && emojiCategories[0].isRecent) {
+      setState(() {
+        processedCategories[0] = List.from(recentEmojis);
+      });
+    }
+  }
+
+  void _initializeEmojis() {
+    const skinTones = ['🏻', '🏼', '🏽', '🏾', '🏿'];
+    processedCategories.clear();
+    emojiVariants.clear();
+
+    for (var category in emojiCategories) {
+      if (category.isRecent) {
+        processedCategories.add(List.from(recentEmojis));
+        continue;
+      }
+
+      final List<String> allEmojisInCat = category.emojis ?? [];
+      final List<String> baseEmojis = [];
+
+      for (int i = 0; i < allEmojisInCat.length; i++) {
+        final String current = allEmojisInCat[i];
+        final bool isVariant = skinTones.any((tone) => current.contains(tone));
+        if (isVariant) continue;
+
+        baseEmojis.add(current);
+
+        final List<String> variants = [];
+        int j = i + 1;
+        while (j < allEmojisInCat.length) {
+          final String next = allEmojisInCat[j];
+          final bool nextIsVariant = skinTones.any(
+            (tone) => next.contains(tone),
+          );
+          if (nextIsVariant && next.contains(current)) {
+            variants.add(next);
+            j++;
+          } else {
+            break;
+          }
+        }
+
+        if (variants.isNotEmpty) {
+          emojiVariants[current] = variants;
+          i = j - 1;
+        }
+      }
+      processedCategories.add(baseEmojis);
+    }
   }
 
   @override
@@ -39,113 +110,81 @@ class _EmojiPickerState extends State<EmojiPicker> {
     super.dispose();
   }
 
-  // دالة لمعالجة النقر والتمرير
-  void _onCategoryTapped(int index) {
-    setState(() {
-      selectedCategory = index;
-    });
-    // التمرير السلس إلى الصفحة الجديدة
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final bool isDark = themeCubit.isDarkMode;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        border: Border(
-          top: BorderSide(color: Colors.grey.shade300, width: 1),
+        color: isDark ? ColorsManager.darkCard : ColorsManager.lightBackground,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            // Fix: using withOpacity instead of withValues(alpha: 0.03)
-            blurRadius: 4,
-            offset: const Offset(0, -2),
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? ColorsManager.borderColor
+                : ColorsManager.bubbleOtherLight,
           ),
-        ],
+        ),
       ),
       child: Column(
         children: [
-          // CATEGORY BAR
-          SizedBox(
-            height: 54,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: availableCategories.length,
-              itemBuilder: (_, i) {
-                final isActive = i == selectedCategory;
-                return GestureDetector(
-                  onTap: () => _onCategoryTapped(i),
-                  child: Container(
-                    width: 46,
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                    decoration: BoxDecoration(
-                      color: isActive ? Colors.white : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: EmojiText(
-                        text: availableCategories[i].icon,
-                        style: TextStylesManager.regular24.copyWith(
-                          fontSize: 27,
-                          height: 1,
-                        ),
+          EmojiCategoryBar(
+            selectedCategory: selectedCategory,
+            onCategorySelected: (index) {
+              setState(() => selectedCategory = index);
+              _pageController.jumpToPage(index);
+            },
+          ),
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: processedCategories.length,
+              onPageChanged: (index) =>
+                  setState(() => selectedCategory = index),
+              itemBuilder: (context, index) {
+                if (index == 0 &&
+                    emojiCategories[0].isRecent &&
+                    processedCategories[0].isEmpty) {
+                  return Center(
+                    child: Text(
+                      appTranslation().get("no_recent_emojis"),
+                      style: TextStyle(
+                        color: isDark ? Colors.white54 : Colors.black45,
                       ),
                     ),
+                  );
+                }
+                return RepaintBoundary(
+                  child: GridView.builder(
+                    padding: const EdgeInsets.all(8),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 8,
+                          mainAxisSpacing: 6,
+                          crossAxisSpacing: 6,
+                        ),
+                    itemCount: processedCategories[index].length,
+                    itemBuilder: (context, i) {
+                      final emoji = processedCategories[index][i];
+                      return EmojiCell(
+                        emoji: emoji,
+                        variants: emojiVariants[emoji],
+                        onSelected: (e) {
+                          _saveRecentEmoji(e);
+                          widget.onEmojiSelected(e);
+                        },
+                      );
+                    },
                   ),
                 );
               },
             ),
           ),
-
-          // 💡 الحل 1: استخدام PageView.builder بدلاً من IndexedStack (Lazy Loading)
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: availableCategories.length,
-              onPageChanged: (index) {
-                setState(() {
-                  selectedCategory = index; // تحديث شريط الفئات عند التمرير
-                });
-              },
-              itemBuilder: (context, index) {
-                final category = availableCategories[index];
-                return _buildEmojiGrid(
-                  category.emojis!,
-                ); // بناء شبكة واحدة فقط عند العرض
-              },
-            ),
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildEmojiGrid(List<String> emojis) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: emojis.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 8,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-      ),
-      itemBuilder: (_, i) {
-        return GestureDetector(
-          onTap: () => widget.onEmojiSelected(emojis[i]),
-          child: Center(
-            child: EmojiText(
-              text: emojis[i],
-              style: const TextStyle(fontSize: 28),
-            ),
-          ),
-        );
-      },
     );
   }
 }

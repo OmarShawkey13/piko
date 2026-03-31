@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
 import 'package:piko/features/on_boarding/data/models/onboarding_item.dart';
 
 class OnBoardingPageItem extends StatelessWidget {
@@ -39,9 +38,7 @@ class OnBoardingPageItem extends StatelessWidget {
             item.subtitle,
             textAlign: TextAlign.center,
             style: TextStylesManager.regular14.copyWith(
-              color: homeCubit.isDarkMode
-                  ? ColorsManager.darkTextSecondary
-                  : ColorsManager.lightTextSecondary,
+              color: ColorsManager.textSecondary,
             ),
           ),
         ),

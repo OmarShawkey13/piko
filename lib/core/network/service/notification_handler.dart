@@ -38,7 +38,7 @@ class NotificationHandler {
     const initSettings = InitializationSettings(android: androidSettings);
 
     await _local.initialize(
-      initSettings,
+      settings: initSettings,
       onDidReceiveNotificationResponse: (response) {
         final payload = response.payload;
         if (payload != null) {
@@ -107,10 +107,10 @@ class NotificationHandler {
 
     // نفس الـ ID للشخص = إشعار واحد فقط يتحدث
     await _local.show(
-      senderId.hashCode,
-      title,
-      body,
-      details,
+      id: senderId.hashCode,
+      title: title,
+      body: body,
+      notificationDetails: details,
       payload: senderId,
     );
   }

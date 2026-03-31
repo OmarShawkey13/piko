@@ -4,8 +4,8 @@ import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/utils/constants/constants.dart';
 import 'package:piko/core/utils/constants/routes.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
-import 'package:piko/core/utils/cubit/home_state.dart';
+import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
+import 'package:piko/core/utils/cubit/auth/auth_state.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
 import 'package:piko/features/complete_profile/presentation/widgets/display_name_field.dart';
 import 'package:piko/features/complete_profile/presentation/widgets/profile_image_picker.dart';
@@ -16,13 +16,10 @@ class CompleteProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = homeCubit.isDarkMode;
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        foregroundColor: isDark
-            ? ColorsManager.darkTextPrimary
-            : ColorsManager.lightTextPrimary,
+        foregroundColor: ColorsManager.textPrimary,
         title: Text(
           appTranslation().get('complete_profile'),
         ),
@@ -36,19 +33,19 @@ class CompleteProfileScreen extends StatelessWidget {
             verticalSpace20,
             const DisplayNameField(),
             verticalSpace40,
-            BlocConsumer<HomeCubit, HomeStates>(
+            BlocConsumer<AuthCubit, AuthStates>(
               buildWhen: (_, state) =>
-                  state is HomeCompleteProfileSuccessState ||
-                  state is HomeCompleteProfileErrorState ||
-                  state is HomeCompleteProfileLoadingState,
+                  state is AuthCompleteProfileSuccessState ||
+                  state is AuthCompleteProfileErrorState ||
+                  state is AuthCompleteProfileLoadingState,
               listener: (context, state) {
-                if (state is HomeCompleteProfileSuccessState) {
+                if (state is AuthCompleteProfileSuccessState) {
                   context.pushReplacement<Object>(Routes.home);
                 }
               },
               builder: (context, state) {
                 return SaveButton(
-                  isLoading: state is HomeCompleteProfileLoadingState,
+                  isLoading: state is AuthCompleteProfileLoadingState,
                 );
               },
             ),

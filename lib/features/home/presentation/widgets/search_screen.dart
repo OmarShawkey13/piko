@@ -1,27 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:piko/core/models/user_model.dart';
+import 'package:piko/core/theme/colors.dart';
+import 'package:piko/core/theme/text_styles.dart';
+import 'package:piko/core/utils/constants/constants.dart';
+import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
-import 'package:piko/core/utils/cubit/home_state.dart';
-import 'package:piko/features/chat/presentation/screen/chat_screen.dart';
+import 'package:piko/core/utils/cubit/home/home_cubit.dart';
+import 'package:piko/core/utils/cubit/home/home_state.dart';
+import 'package:piko/core/utils/cubit/theme/theme_cubit.dart';
+import 'package:piko/core/utils/extensions/context_extension.dart';
+import 'package:piko/features/home/presentation/widgets/search_bar_widget.dart';
+import 'package:piko/features/home/presentation/widgets/search_status_view.dart';
+import 'package:piko/features/home/presentation/widgets/user_search_tile.dart';
 
-class SearchScreen extends StatelessWidget {
+class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
   @override
+  State<SearchScreen> createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends State<SearchScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isDark = homeCubit.isDarkMode;
+    final isDark = themeCubit.isDarkMode;
     return Scaffold(
+      backgroundColor: isDark
+          ? ColorsManager.darkBackground
+          : ColorsManager.lightBackground,
       appBar: AppBar(
-        title: const Text("Search"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () {
+            homeCubit.clearSearch();
+            context.pop;
+          },
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: isDark ? Colors.white : Colors.black,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          appTranslation().get("search"),
+          style: TextStylesManager.bold20.copyWith(
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           children: [
-            _buildSearchBar(context, isDark),
+            verticalSpace10,
+            SearchBarWidget(
+              controller: _searchController,
+              isDark: isDark,
+              onClear: () {
+                _searchController.clear();
+                homeCubit.clearSearch();
+                setState(() {});
+              },
+            ),
             verticalSpace24,
             Expanded(
               child: BlocBuilder<HomeCubit, HomeStates>(
@@ -31,7 +81,10 @@ class SearchScreen extends StatelessWidget {
                     state is SearchSuccessState ||
                     state is SearchErrorState,
                 builder: (context, state) {
-                  return _buildResultWidget(context, state);
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _buildResultWidget(context, state, isDark),
+                  );
                 },
               ),
             ),
@@ -41,94 +94,46 @@ class SearchScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchBar(BuildContext context, bool isDark) {
-    return TextField(
-      onChanged: (value) => homeCubit.searchUsername(value),
-      style: Theme.of(context).textTheme.titleMedium,
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
-        hintText: "Search username...",
-        prefixIcon: const Icon(Icons.search_rounded),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-      ),
-    );
-  }
-
-  Widget _buildResultWidget(BuildContext context, HomeStates state) {
+  Widget _buildResultWidget(
+    BuildContext context,
+    HomeStates state,
+    bool isDark,
+  ) {
     if (state is SearchLoadingState) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: LoadingIndicator());
     }
-    String hintText = "Search for a username";
-    if (state is SearchErrorState) {
-      hintText = "Error: ${state.error}";
-    } else if (state is SearchSuccessState) {
+
+    if (state is SearchSuccessState) {
       final user = state.user;
       if (user != null) {
-        return Align(
-          alignment: Alignment.topCenter,
-          child: UserTile(user: user),
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          children: [
+            UserSearchTile(user: user, isDark: isDark),
+          ],
         );
-      } else {
-        hintText = "No user found";
+      } else if (_searchController.text.isNotEmpty) {
+        return SearchStatusView(
+          icon: Icons.person_search_rounded,
+          text: appTranslation().get("no_user_found"),
+          isDark: isDark,
+        );
       }
     }
-    return Center(
-      child: Text(
-        hintText,
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).hintColor,
-        ),
-      ),
-    );
-  }
-}
 
-class UserTile extends StatelessWidget {
-  final UserModel user;
+    if (state is SearchErrorState) {
+      return SearchStatusView(
+        icon: Icons.error_outline_rounded,
+        text: "${appTranslation().get("something_went_wrong")}: ${state.error}",
+        isDark: isDark,
+        color: ColorsManager.error,
+      );
+    }
 
-  const UserTile({super.key, required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.all(12),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute<Widget>(
-            builder: (_) => ChatScreen(user: user),
-          ),
-        );
-      },
-      leading: CircleAvatar(
-        radius: 24,
-        backgroundImage: user.photoUrl.isNotEmpty
-            ? NetworkImage(user.photoUrl)
-            : null,
-        child: user.photoUrl.isEmpty
-            ? const Icon(Icons.person, size: 28)
-            : null,
-      ),
-      title: Text(
-        user.displayName.isNotEmpty ? user.displayName : user.username,
-        style: theme.textTheme.titleMedium,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Text(
-        "@${user.username}",
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.hintColor,
-        ),
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+    return SearchStatusView(
+      icon: Icons.search_rounded,
+      text: appTranslation().get("search_start_typing"),
+      isDark: isDark,
     );
   }
 }

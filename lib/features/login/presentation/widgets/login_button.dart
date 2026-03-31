@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
+import 'package:piko/core/utils/constants/primary/conditional_builder.dart';
+import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
 
 class LoginButton extends StatelessWidget {
   final GlobalKey<FormState> formKey;
@@ -22,20 +23,21 @@ class LoginButton extends StatelessWidget {
             ? null
             : () {
                 if (formKey.currentState!.validate()) {
-                  homeCubit.login();
+                  authCubit.login();
                 }
               },
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
         ),
-        child: isLoading
-            ? const CircularProgressIndicator()
-            : Text(
-                appTranslation().get('login'),
-                style: TextStylesManager.regular16.copyWith(
-                  color: Colors.white,
-                ),
-              ),
+        child: ConditionalBuilder(
+          loadingState: isLoading,
+          successBuilder: (_) => Text(
+            appTranslation().get('login'),
+            style: TextStylesManager.regular16.copyWith(
+              color: Colors.white,
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:piko/core/theme/colors.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
-import 'package:piko/core/utils/cubit/home_state.dart';
+import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
+import 'package:piko/core/utils/cubit/auth/auth_state.dart';
 
 class ProfileImagePicker extends StatelessWidget {
   const ProfileImagePicker({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeCubit, HomeStates>(
+    return BlocBuilder<AuthCubit, AuthStates>(
       buildWhen: (_, state) =>
-          state is HomeUploadImageSuccessState ||
-          state is HomeUploadImageErrorState ||
-          state is HomeUploadImageLoadingState,
+          state is AuthUploadImageSuccessState ||
+          state is AuthUploadImageErrorState ||
+          state is AuthUploadImageLoadingState,
       builder: (context, state) {
-        final isUploading = homeCubit.isUploadingImage;
-        final imageUrl = homeCubit.profileImageUrl;
+        final isUploading = authCubit.isUploadingImage;
+        final imageUrl = authCubit.profileImageUrl;
 
         return Stack(
           alignment: Alignment.center,
@@ -44,7 +44,7 @@ class ProfileImagePicker extends StatelessWidget {
               bottom: 0,
               right: 0,
               child: InkWell(
-                onTap: homeCubit.pickProfileImage,
+                onTap: authCubit.pickProfileImage,
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: const BoxDecoration(

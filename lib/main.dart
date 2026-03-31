@@ -9,8 +9,10 @@ import 'package:piko/core/network/service/notification_handler.dart';
 import 'package:piko/core/theme/theme.dart';
 import 'package:piko/core/utils/constants/my_bloc_observer.dart';
 import 'package:piko/core/utils/constants/routes.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
-import 'package:piko/core/utils/cubit/home_state.dart';
+import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
+import 'package:piko/core/utils/cubit/home/home_cubit.dart';
+import 'package:piko/core/utils/cubit/theme/theme_cubit.dart';
+import 'package:piko/core/utils/cubit/theme/theme_state.dart';
 import 'package:piko/firebase_options.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -53,16 +55,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => sl<HomeCubit>()
-        ..changeTheme(
-          fromShared: isDark,
-        )
-        ..initializeLanguage(
-          isArabic: isArabic,
-          translations: translation,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (context) => sl<AuthCubit>()),
+        BlocProvider(create: (context) => sl<HomeCubit>()),
+        BlocProvider(
+          create: (context) => sl<ThemeCubit>()
+            ..changeTheme(
+              fromShared: isDark,
+            )
+            ..changeLanguage(
+              isArabic: isArabic,
+              translations: translation,
+            ),
         ),
-      child: BlocBuilder<HomeCubit, HomeStates>(
+      ],
+      child: BlocBuilder<ThemeCubit, ThemeState>(
         builder: (context, state) => MaterialApp(
           debugShowCheckedModeBanner: false,
           navigatorKey: navigatorKey,
@@ -70,12 +78,12 @@ class MyApp extends StatelessWidget {
           initialRoute: Routes.enterRoute,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          themeMode: HomeCubit.get(context).isDarkMode
+          themeMode: ThemeCubit.get(context).isDarkMode
               ? ThemeMode.dark
               : ThemeMode.light,
           builder: (c, widget) {
             return Directionality(
-              textDirection: HomeCubit.get(context).isArabicLang
+              textDirection: ThemeCubit.get(context).isArabicLang
                   ? TextDirection.rtl
                   : TextDirection.ltr,
               child: widget!,

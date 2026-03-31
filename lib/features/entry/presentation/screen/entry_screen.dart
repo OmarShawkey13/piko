@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:piko/core/network/local/cache_helper.dart';
+import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
 import 'package:piko/core/utils/constants/routes.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
 
@@ -46,7 +47,7 @@ class _EntryScreenState extends State<EntryScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+      body: LoadingIndicator(),
     );
   }
 }

@@ -1,11 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/models/user_model.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
+import 'package:piko/core/utils/cubit/chat/chat_cubit.dart';
+import 'package:piko/core/utils/extensions/context_extension.dart';
+import 'package:piko/features/chat/presentation/widgets/user_online_status.dart';
 
 class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   final UserModel user;
@@ -15,86 +17,74 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      elevation: 0.5,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       titleSpacing: 0,
-      title: Row(
-        children: [
-          CircleAvatar(
-            backgroundImage: user.photoUrl.isNotEmpty
-                ? NetworkImage(user.photoUrl)
-                : null,
-            child: user.photoUrl.isEmpty ? const Icon(Icons.person) : null,
-          ),
-          horizontalSpace10,
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// Display name
-              Text(
-                user.displayName.isNotEmpty ? user.displayName : user.username,
-                style: TextStylesManager.regular16.copyWith(
-                  color: homeCubit.isDarkMode
-                      ? ColorsManager.darkTextPrimary
-                      : ColorsManager.lightTextPrimary,
-                ),
+      leading: IconButton(
+        onPressed: () => context.pop,
+        icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+      ),
+      title: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        child: Row(
+          children: [
+            _buildUserAvatar(),
+            horizontalSpace12,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildUserName(),
+                  UserOnlineStatus(userId: user.uid),
+                ],
               ),
-
-              /// ONLINE / LAST SEEN / TYPING
-              StreamBuilder<DocumentSnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection("users")
-                    .doc(user.uid)
-                    .snapshots(),
-                builder: (context, snap) {
-                  if (!snap.hasData || !snap.data!.exists) {
-                    return Text(
-                      "Loading...",
-                      style: TextStylesManager.regular12.copyWith(
-                        color: homeCubit.isDarkMode
-                            ? ColorsManager.darkTextSecondary
-                            : ColorsManager.lightTextSecondary,
-                      ),
-                    );
-                  }
-                  final data = snap.data!.data() as Map<String, dynamic>? ?? {};
-                  final bool online = data["online"] ?? false;
-                  final int lastActive = data["lastActive"] ?? 0;
-                  return Text(
-                    online ? "Online" : _formatLastSeen(lastActive),
-                    style: TextStylesManager.regular12.copyWith(
-                      color: online ? Colors.green : Colors.grey,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.wallpaper),
-          onPressed: () async {
-            await homeCubit.pickChatBackground();
-          },
+          onPressed: () => ChatCubit.get(context).pickChatBackground(),
+          icon: const Icon(
+            Icons.palette_outlined,
+            color: ColorsManager.primary,
+          ),
+          tooltip: appTranslation().get("chat_background"),
         ),
+        horizontalSpace8,
       ],
+    );
+  }
+
+  Widget _buildUserAvatar() {
+    return Hero(
+      tag: user.uid,
+      child: CircleAvatar(
+        radius: 20,
+        backgroundColor: ColorsManager.primary.withValues(alpha: 0.1),
+        backgroundImage: user.photoUrl.isNotEmpty
+            ? CachedNetworkImageProvider(user.photoUrl)
+            : null,
+        child: user.photoUrl.isEmpty
+            ? const Icon(Icons.person, color: ColorsManager.primary)
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildUserName() {
+    return Text(
+      user.displayName.isNotEmpty ? user.displayName : user.username,
+      style: TextStylesManager.bold16.copyWith(
+        color: ColorsManager.textPrimary,
+        height: 1.1,
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-
-  /// LAST SEEN formatter
-  String _formatLastSeen(int ts) {
-    if (ts == 0) return "Offline";
-    final date = DateTime.fromMillisecondsSinceEpoch(ts);
-    int hour = date.hour;
-    final minute = date.minute.toString().padLeft(2, '0');
-    final period = hour < 12
-        ? appTranslation().get("am")
-        : appTranslation().get("pm");
-    hour = hour % 12;
-    if (hour == 0) hour = 12;
-    return "$hour:$minute $period";
-  }
 }

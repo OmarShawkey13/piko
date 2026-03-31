@@ -3,14 +3,17 @@ import 'package:piko/core/theme/emoji_data.dart';
 class EmojiCategory {
   final String icon;
   final List<String>? emojis;
+  final bool isRecent;
 
   EmojiCategory({
     required this.icon,
-    required this.emojis,
+    this.emojis,
+    this.isRecent = false,
   });
 }
 
 final List<EmojiCategory> emojiCategories = [
+  EmojiCategory(icon: "🕒", emojis: [], isRecent: true),
   EmojiCategory(icon: "😊", emojis: EmojiData.data[0]),
   EmojiCategory(icon: "🐵", emojis: EmojiData.data[1]),
   EmojiCategory(icon: "🍎", emojis: EmojiData.data[2]),

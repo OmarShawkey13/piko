@@ -4,7 +4,7 @@ import 'package:piko/core/network/local/cache_helper.dart';
 import 'package:piko/core/utils/constants/assets_helper.dart';
 import 'package:piko/core/utils/constants/constants.dart';
 import 'package:piko/core/utils/constants/routes.dart';
-import 'package:piko/core/utils/cubit/home_cubit.dart';
+import 'package:piko/core/utils/cubit/theme/theme_cubit.dart';
 import 'package:piko/features/on_boarding/data/models/onboarding_item.dart';
 import 'package:piko/features/on_boarding/presentation/widgets/onboarding_footer.dart';
 import 'package:piko/features/on_boarding/presentation/widgets/onboarding_indicator.dart';
@@ -52,7 +52,7 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: homeCubit.isDarkMode
+        statusBarIconBrightness: themeCubit.isDarkMode
             ? Brightness.light
             : Brightness.dark,
       ),

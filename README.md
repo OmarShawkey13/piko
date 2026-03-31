@@ -1,175 +1,131 @@
-# Piko — Modern Chat App
-
-[![Flutter](https://img.shields.io/badge/Flutter-3.0-blue)](#)
-[![License](https://img.shields.io/badge/License-MIT-green)](#)
-[![Build](https://img.shields.io/badge/Build-passing-brightgreen)](#)
-
----
-
 <p align="center">
-  <img src="assets/images/logo.png" alt="Piko Logo" width="500" />
+  <img src="assets/images/logo.png" width="500" alt="Piko Logo">
 </p>
 
-**Piko** is a modern, privacy-minded, real-time chat application built with Flutter. It emphasizes a
-clean UX, real-time messaging powered by Firebase, and a modular architecture that makes it easy to
-extend and maintain.
+# Piko — The Ultimate Real-Time Chat Experience 🚀
 
-> This README is structured to help contributors, reviewers, and new developers quickly understand
-> and run the project.
+[![Flutter Version](https://img.shields.io/badge/Flutter-3.11+-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-Powered-FFCA28?style=for-the-badge&logo=firebase)](https://firebase.google.com)
+[![Bloc](https://img.shields.io/badge/State--Management-Bloc/Cubit-61DAFB?style=for-the-badge)](https://pub.dev/packages/flutter_bloc)
+[![Architecture](https://img.shields.io/badge/Architecture-Clean--Feature--Based-success?style=for-the-badge)](#)
 
----
-
-## 🔑 Highlights
-
-- ✅ Real-time messaging with Cloud Firestore
-- ✅ Secure authentication with Firebase Auth
-- ✅ Optimized image handling and caching
-- ✅ Dark + Light themes with accessible color system
-- ✅ Clean, feature-based architecture
-- ✅ Push notifications (OneSignal + local)
-- ✅ CI-ready and production-oriented project structure
+**Piko** هو تطبيق دردشة متكامل تم تطويره باستخدام **Flutter** و **Firebase**، يهدف إلى توفير تجربة تواصل فورية، آمنة، وغنية بالمميزات. يعتمد التطبيق على معايير هندسية برمجية عالية لضمان الأداء السلس والقابلية للتوسع.
 
 ---
 
-## 📸 Screenshots / Preview
+## 📸 معاينة التطبيق (Screenshots)
 
-> Replace these placeholders with real screenshots from `screenshots/` or `assets/`.
-
-|                 Login                  |                 Home                 |                 Chat                 |
-|:--------------------------------------:|:------------------------------------:|:------------------------------------:|
-| ![Login](assets/screenshots/login.jpg) | ![Home](assets/screenshots/home.jpg) | ![Chat](assets/screenshots/chat.jpg) |
-
----
-
-## 🏗️ Architecture Overview
-
-```
-lib/
-├─ core/            # Shared services, themes, models, DI
-│  ├─ di/           # Dependency injection (GetIt)
-│  ├─ theme/        # Colors, typography, widgets
-│  ├─ models/       # DTOs & domain models
-│  └─ utils/        # helpers, constants
-├─ features/
-│  ├─ auth/         # login, register
-│  ├─ home/         # chats list, search
-│  ├─ chat/         # conversation UI & message handling
-│  ├─ settings/     # user settings & theme
-│  └─ onboarding/
-└─ main.dart
-```
-
-This layout helps keep features self-contained and easier to test.
+<p align="center">
+  <img src="assets/screenshots/preview.png" width="280" alt="Preview Screen">
+  <img src="assets/screenshots/home.png" width="280" alt="Home Screen">
+  <img src="assets/screenshots/chat.png" width="280" alt="Chat Screen">
+</p>
 
 ---
 
-## 🧩 Tech Stack
+## 🌟 القائمة الكاملة للمميزات (Full Feature Set)
 
-- Flutter
-- Firebase (Auth, Firestore,)
-- Cloudinary (image hosting)
-- Bloc (flutter_bloc)
-- GetIt (dependency injection)
-- cached_network_image, image_picker
-- OneSignal (notifications)
-- Shared Preferences (local storage)
-- Optional: CI (GitHub Actions) for build & test
+### 💬 نظام الدردشة المتقدم (Core Messaging)
+- **Real-time Messaging:** مزامنة فورية للرسائل باستخدام `Cloud Firestore`.
+- **Media Messaging:** إرسال واستقبال الصور مع معالجة التحميل (Loading States) والتحميل الفاشل.
+- **Reply System:** دعم الرد على رسائل محددة مع مؤشر بصري (Reply Indicator) ومعاينة للرسالة المردود عليها (Reply Preview).
+- **Typing Indicators:** عرض مؤشر "يكتب الآن..." (Typing Bubble) بشكل حيوي عند كتابة الطرف الآخر.
+- **Message Status:** تتبع حالة الرسالة (ارسال، وصول، قراءة) بدقة.
+- **Online/Offline Status:** عرض حالة المستخدم (متصل الآن) في الوقت الفعلي.
+- **Emoji Picker:** منتقي رموز تعبيرية (Emoji) مدمج ومخصص يدعم التصنيفات المختلفة لسهولة التعبير.
+- **iOS Style Context Menu:** قائمة خيارات متقدمة عند الضغط المطول على الرسائل بتصميم iOS الجذاب.
+
+### 🔔 الإشعارات والتنبيهات (Notifications)
+- **Push Notifications:** دمج كامل مع `OneSignal` لاستقبال الإشعارات حتى عند إغلاق التطبيق.
+- **Local Notifications:** استخدام `flutter_local_notifications` للتنبيهات الداخلية وإدارة تدفق الإشعارات أثناء فتح التطبيق.
+- **Smart Handler:** نظام `NotificationHandler` مخصص لإدارة توجيه المستخدم عند النقر على الإشعار.
+
+### 🔐 التوثيق والملف الشخصي (Auth & Profile)
+- **Firebase Auth:** تسجيل دخول وتسجيل حساب جديد آمن.
+- **Profile Completion:** واجهة مخصصة لإكمال بيانات المستخدم (الصورة الشخصية، الاسم، النبذة).
+- **Image Cropping/Picking:** دعم اختيار الصور من المعرض أو الكاميرا وتعيينها كصورة شخصية.
+
+### 🌍 التخصيص وتجربة المستخدم (UI/UX)
+- **Localization:** دعم ثنائي اللغة (عربي/إنجليزي) مع تغيير اتجاه التطبيق بالكامل (RTL/LTR) وحفظ الإعدادات محلياً.
+- **Theme Engine:** نظام ثيمات ذكي يدعم `Dark Mode` و `Light Mode` مع حفظ اختيار المستخدم.
+- **Onboarding Experience:** شاشات تعريفية جذابة تشرح مميزات التطبيق للمستخدمين الجدد (توجد في `assets/images/onboarding`).
+- **Smooth Animations:** انتقالات سلسة ومؤشرات تحميل مخصصة (Blur backgrounds, placeholders).
 
 ---
 
-## 🎯 Design & UX Decisions
+## 🏗️ الهيكل الهندسي للمشروع (Detailed Architecture)
 
-- **Colors & Theming** — centralized in `ColorsManager` (supports Light & Dark).
-- **Chat Bubbles** — designed for legibility and accessibility. Sender bubble uses primary brand
-  color; receiver uses soft neutral tones.
-- **Performance** — image caching, limited list item rebuilds, stream-based updates to minimize UI
-  thrash.
+يتبع المشروع معمارية **Clean Architecture** مقسمة حسب الميزات (**Feature-driven**):
+
+### 📁 `lib/core/` (النواة والأساسيات)
+- **`di/`**: إعدادات حقن التبعيات باستخدام `GetIt`.
+- **`network/`**: 
+    - `local/`: التعامل مع `SharedPreferences` عبر `CacheHelper`.
+    - `service/`: إدارة `Firebase Services` و `Notification Service`.
+- **`theme/`**: تعريف `AppTheme` للألوان، الخطوط، وأنماط الـ Widgets.
+- **`models/`**: نماذج البيانات الموحدة مثل `MessageModel`, `UserModel`.
+- **`utils/`**: الثوابت، الملحقات (Extensions)، والـ Cubits العامة (Theme, Auth, Home).
+
+### 📁 `lib/features/` (الوحدات الوظيفية)
+كل ميزة تحتوي على تقسيم داخلي (Data, Presentation, Widgets):
+- **`chat/`**: تحتوي على أعقد الـ Widgets مثل `MessageBubble`, `TypingIndicator`, `AttachmentMenu`.
+- **`home/`**: إدارة قائمة المحادثات والبحث.
+- **`login/` & `complete_profile/`**: دورة حياة المستخدم.
+- **`settings/`**: إدارة الملف الشخصي واللغة والثيم.
 
 ---
 
-## 🚀 Getting Started (Developer)
+## 🛠️ التقنيات والمكتبات (Tech Stack)
 
-### Prerequisites
+| التقنية                  | الاستخدام                           |
+|:-------------------------|:------------------------------------|
+| **Flutter Bloc/Cubit**   | إدارة الحالة (State Management)     |
+| **Firebase Firestore**   | قاعدة البيانات الفورية              |
+| **Firebase Storage**     | تخزين الصور والوسائط                |
+| **OneSignal**            | إشعارات الدفع (Push Notifications)  |
+| **GetIt**                | حقن التبعيات (Dependency Injection) |
+| **Cached Network Image** | معالجة وعرض الصور بذكاء             |
+| **Shared Preferences**   | التخزين المحلي للإعدادات            |
+| **Image Picker**         | اختيار الوسائط من الجهاز            |
 
-- Flutter SDK (stable)
-- Android Studio or VS Code
-- A Firebase project and the `google-services.json` (Android) / `GoogleService-Info.plist` (iOS)
+---
 
-### Quick setup
+## 🚀 تعليمات التشغيل (Setup & Installation)
 
+1. **إعداد Firebase:**
+   - قم بإنشاء مشروع جديد في Firebase Console.
+   - أضف تطبيقات Android/iOS وحمل ملفات `google-services.json` و `GoogleService-Info.plist`.
+   - قم بتفعيل `Authentication` و `Firestore` و `Storage`.
+
+2. **إعداد OneSignal:**
+   - قم بإنشاء حساب في OneSignal واحصل على `App ID`.
+   - قم بتحديث الـ ID في ملف `lib/main.dart`.
+
+3. **التشغيل:**
 ```bash
-# Clone
-git clone https://github.com/omarShawkey13/piko.git
-cd piko
-
-# Install
+# تحميل المكتبات
 flutter pub get
 
-# Run
+# توليد أي ملفات مفقودة (إن وجدت)
+flutter pub run build_runner build
+
+# تشغيل التطبيق
 flutter run
 ```
 
-### Firebase setup
+---
 
-1. Create a Firebase project.
-2. Enable **Authentication** (Email/Password).
-3. Create a **Cloud Firestore** database in test or production mode.
-4. Add Android app: download `google-services.json` → put in `android/app/`.
-5. (iOS) Add iOS app: download `GoogleService-Info.plist` → put in `ios/Runner/`.
-6. (Optional) Configure Firebase rules for production.
+## 📁 الأصول (Assets)
+- **Translations**: ملفات JSON للترجمة في `assets/translations/`.
+- **Images**: الأيقونات والصور في `assets/images/`.
+- **Emojis**: موارد الرموز التعبيرية في `assets/emoji/`.
 
 ---
 
-## 🧪 Testing
-
-- Unit tests: `flutter test`
-- Widget/integration tests: `flutter drive` / `integration_test`
-
-Consider adding mocks for Firestore and Auth when writing unit tests.
+## 👤 المطور
+**Omar Shawkey** 
+- [GitHub](https://github.com/omarShawkey13)
+- [LinkedIn](https://linkedin.com/in/omarshawkey)
 
 ---
-
-## 📌 Pinned Chats & UX Notes
-
-- Pinned chats should be stored as a boolean/priority in Firestore (`pinned: true` or
-  `pinnedAt: timestamp`).
-- Sort chats locally by `pinned` then `lastMessage.timestamp` to always surface pinned chats at top.
-
----
-
-## 🛠️ Common commands
-
-```bash
-# Analyze
-flutter analyze
-
-# Format
-flutter format .
-
-# Run on device
-flutter run
-
-# Build
-flutter build apk --release
-```
-
----
-
-## 📣 Contributing
-
-1. Fork the repo
-2. Create a feature branch
-3. Open a PR with description & screenshots
-
-Please follow the existing style and write tests for new logic.
-
----
-
-## 📬 Contact
-
-Omar Shawkey — @OmarShawkey13
-
-
----
-
-*Generated and polished for clarity, structure and developer onboarding.*
+*هذا التطبيق مبني بأحدث معايير Flutter لعام 2024.*

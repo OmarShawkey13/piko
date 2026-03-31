@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
 import 'package:piko/features/chat/data/model/context_menu.dart';
@@ -116,9 +117,11 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
 
   TextStyle getTextStyle(BuildContext context, bool isDelete) {
     final baseColor = isDelete
-        ? Colors.red
+        ? ColorsManager.error
         : widget.textStyle?.color ??
-              (widget.isDark ?? false ? Colors.white : Colors.black);
+              (widget.isDark ?? false
+                  ? ColorsManager.white
+                  : ColorsManager.black);
     final fontSize = widget.textSize ?? 16;
     return widget.textStyle?.copyWith(
           color: baseColor,
@@ -134,9 +137,11 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
 
   Color getIconColor(bool isDelete) {
     return isDelete
-        ? Colors.red
+        ? ColorsManager.error
         : widget.iconColor ??
-              (widget.isDark ?? false ? Colors.white : Colors.black);
+              (widget.isDark ?? false
+                  ? ColorsManager.white
+                  : ColorsManager.black);
   }
 
   @override
@@ -150,14 +155,16 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
         if (context.mounted) context.pop;
       },
       child: Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: ColorsManager.transparent,
         insetPadding: EdgeInsets.zero,
         child: Stack(
           alignment: Alignment.center,
           children: [
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(color: Colors.black.withValues(alpha: 0.15)),
+              child: Container(
+                color: ColorsManager.black.withValues(alpha: 0.15),
+              ),
             ),
             SafeArea(
               child: Column(
@@ -174,12 +181,8 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                       opacity: childOpacity,
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                          maxWidth:
-                              MediaQuery.of(context).size.width *
-                              0.8, // ⬅ يمنع زيادة العرض
-                          maxHeight:
-                              MediaQuery.of(context).size.height *
-                              0.4, // ⬅ يمنع زيادة الطول
+                          maxWidth: MediaQuery.of(context).size.width * 0.8,
+                          maxHeight: MediaQuery.of(context).size.height * 0.4,
                         ),
                         child: SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
@@ -196,25 +199,23 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                           horizontal: 16,
                         ),
                     child: Align(
-                        alignment: widget.menuAlignment ?? Alignment.center,
+                      alignment: widget.menuAlignment ?? Alignment.center,
                       child: Container(
                         width: 280,
                         decoration: BoxDecoration(
                           color: widget.isDark ?? false
-                              ? Colors.black.withValues(alpha: 0.9)
-                              : Colors.white.withValues(alpha: 0.7),
+                              ? ColorsManager.black.withValues(alpha: 0.9)
+                              : ColorsManager.white.withValues(alpha: 0.7),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
+                              color: ColorsManager.black.withValues(alpha: 0.1),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-                        // REMOVED Flexible here
                         child: SingleChildScrollView(
-                          // <--- This is now the direct child of Container
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -259,8 +260,7 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                               ? const BorderRadius.vertical(
                                                   top: Radius.circular(16),
                                                 )
-                                              : index ==
-                                                    currentMenu.length - 1
+                                              : index == currentMenu.length - 1
                                               ? const BorderRadius.vertical(
                                                   bottom: Radius.circular(
                                                     16,
@@ -268,11 +268,10 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                                 )
                                               : BorderRadius.zero,
                                           child: Container(
-                                            padding:
-                                                const EdgeInsets.symmetric(
-                                                  vertical: 12,
-                                                  horizontal: 20,
-                                                ),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                              horizontal: 20,
+                                            ),
                                             width: double.infinity,
                                             child: Row(
                                               mainAxisAlignment:
@@ -308,8 +307,13 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                             color:
                                                 widget.dividerColor ??
                                                 (widget.isDark ?? false
-                                                    ? Colors.white12
-                                                    : Colors.grey[300]),
+                                                    ? ColorsManager
+                                                          .darkTextSecondary
+                                                          .withValues(
+                                                            alpha: 0.12,
+                                                          )
+                                                    : ColorsManager
+                                                          .bubbleOtherLight),
                                           ),
                                       ],
                                     ),
