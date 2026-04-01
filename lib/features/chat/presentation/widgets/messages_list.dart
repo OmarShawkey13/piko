@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:piko/core/models/message_model.dart';
-import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
+import 'package:piko/core/utils/constants/primary/conditional_builder.dart';
 import 'package:piko/core/utils/cubit/chat/chat_cubit.dart';
 import 'package:piko/features/chat/presentation/widgets/message_bubble.dart';
 import 'package:piko/features/chat/presentation/widgets/typing_indicator.dart';
@@ -47,57 +47,60 @@ class _MessagesListState extends State<MessagesList> {
     return StreamBuilder<List<MessageModel>>(
       stream: chatCubit.getMessagesStream(widget.myId, widget.otherId),
       builder: (_, snap) {
-        if (!snap.hasData) return const LoadingIndicator();
-        final messages = snap.data!;
+        return ConditionalBuilder(
+          loadingState: !snap.hasData,
+          successBuilder: (_) {
+            final messages = snap.data!;
+            return ListView.builder(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 8,
+                bottom: widget.bottomPadding + 8,
+              ),
+              itemCount: messages.length + (widget.isPreview ? 0 : 1),
+              reverse: true,
+              physics: const BouncingScrollPhysics(),
+              shrinkWrap: false,
+              itemBuilder: (_, index) {
+                if (!widget.isPreview && index == 0) {
+                  return TypingIndicator(
+                    myId: widget.myId,
+                    otherId: widget.otherId,
+                  );
+                }
 
-        return ListView.builder(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 8,
-            bottom: widget.bottomPadding + 8,
-          ),
-          itemCount: messages.length + (widget.isPreview ? 0 : 1),
-          reverse: true,
-          physics: const BouncingScrollPhysics(),
-          shrinkWrap: false,
-          itemBuilder: (_, index) {
-            if (!widget.isPreview && index == 0) {
-              return TypingIndicator(
-                myId: widget.myId,
-                otherId: widget.otherId,
-              );
-            }
+                final msgIndex = widget.isPreview
+                    ? messages.length - 1 - index
+                    : messages.length - index;
+                if (msgIndex < 0 || msgIndex >= messages.length) {
+                  return const SizedBox();
+                }
+                final msg = messages[msgIndex];
+                final isMe = msg.senderId == widget.myId;
 
-            final msgIndex = widget.isPreview
-                ? messages.length - 1 - index
-                : messages.length - index;
-            if (msgIndex < 0 || msgIndex >= messages.length) {
-              return const SizedBox();
-            }
-            final msg = messages[msgIndex];
-            final isMe = msg.senderId == widget.myId;
+                if (!widget.isPreview && !msg.seen && !isMe) {
+                  chatCubit.markAllMessagesAsSeen(
+                    widget.myId,
+                    widget.otherId,
+                    msg.id,
+                  );
+                }
 
-            if (!widget.isPreview && !msg.seen && !isMe) {
-              chatCubit.markAllMessagesAsSeen(
-                widget.myId,
-                widget.otherId,
-                msg.id,
-              );
-            }
+                final key = messageKeys.putIfAbsent(
+                  msg.id,
+                  () => GlobalKey<MessageBubbleState>(),
+                );
 
-            final key = messageKeys.putIfAbsent(
-              msg.id,
-              () => GlobalKey<MessageBubbleState>(),
-            );
-
-            return MessageBubble(
-              key: key,
-              msg: msg,
-              isMe: isMe,
-              onReplyTap: widget.isPreview
-                  ? null
-                  : (replyId) => scrollToMessage(replyId),
+                return MessageBubble(
+                  key: key,
+                  msg: msg,
+                  isMe: isMe,
+                  onReplyTap: widget.isPreview
+                      ? null
+                      : (replyId) => scrollToMessage(replyId),
+                );
+              },
             );
           },
         );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:piko/core/models/user_model.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
+import 'package:piko/core/utils/constants/primary/primary_circle_avatar.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 
 class ProfileHeader extends StatelessWidget {
@@ -37,19 +38,11 @@ class ProfileHeader extends StatelessWidget {
               color: isDark ? ColorsManager.darkBackground : Colors.white,
               shape: BoxShape.circle,
             ),
-            child: CircleAvatar(
+            child: PrimaryCircleAvatar(
+              imageUrl: user.photoUrl,
               radius: 55,
+              iconSize: 65,
               backgroundColor: ColorsManager.primary.withValues(alpha: 0.1),
-              backgroundImage: user.photoUrl.isNotEmpty
-                  ? NetworkImage(user.photoUrl)
-                  : null,
-              child: user.photoUrl.isEmpty
-                  ? const Icon(
-                      Icons.person_rounded,
-                      size: 65,
-                      color: ColorsManager.primary,
-                    )
-                  : null,
             ),
           ),
         ),

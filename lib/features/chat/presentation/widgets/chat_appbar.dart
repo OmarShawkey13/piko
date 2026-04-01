@@ -1,8 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
+import 'package:piko/core/utils/constants/primary/primary_app_bar.dart';
+import 'package:piko/core/utils/constants/primary/primary_circle_avatar.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/models/user_model.dart';
 import 'package:piko/core/utils/cubit/chat/chat_cubit.dart';
@@ -16,19 +17,28 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
+    return PrimaryAppBar(
       elevation: 0.5,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      titleSpacing: 0,
+      centerTitle: false,
       leading: IconButton(
         onPressed: () => context.pop,
         icon: const Icon(Icons.arrow_back_ios_new, size: 20),
       ),
-      title: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      titleWidget: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            _buildUserAvatar(),
+            Hero(
+              tag: user.uid,
+              child: PrimaryCircleAvatar(
+                imageUrl: user.photoUrl,
+                radius: 20,
+                useCachedImage: true,
+                backgroundColor: ColorsManager.primary.withValues(alpha: 0.1),
+                fallbackIcon: Icons.person,
+              ),
+            ),
             horizontalSpace12,
             Expanded(
               child: Column(
@@ -54,22 +64,6 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         horizontalSpace8,
       ],
-    );
-  }
-
-  Widget _buildUserAvatar() {
-    return Hero(
-      tag: user.uid,
-      child: CircleAvatar(
-        radius: 20,
-        backgroundColor: ColorsManager.primary.withValues(alpha: 0.1),
-        backgroundImage: user.photoUrl.isNotEmpty
-            ? CachedNetworkImageProvider(user.photoUrl)
-            : null,
-        child: user.photoUrl.isEmpty
-            ? const Icon(Icons.person, color: ColorsManager.primary)
-            : null,
-      ),
     );
   }
 

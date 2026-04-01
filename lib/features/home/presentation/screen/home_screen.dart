@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:piko/core/models/chat_model.dart';
 import 'package:piko/core/utils/constants/primary/conditional_builder.dart';
-import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
 import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
 import 'package:piko/core/utils/cubit/auth/auth_state.dart';
 import 'package:piko/core/utils/cubit/home/home_cubit.dart';
@@ -57,14 +56,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           appBar: const HomeAppBar(),
           body: ConditionalBuilder(
             loadingState: user == null,
-            loadingBuilder: (_) => const LoadingIndicator(),
             successBuilder: (_) => StreamBuilder<List<ChatModel>>(
               stream: homeCubit.getChatsStream(user!.uid),
               builder: (_, snap) {
-                if (!snap.hasData) return const LoadingIndicator();
-                final chats = snap.data!;
-                if (chats.isEmpty) return const EmptyChats();
-                return ConversationList(chats: chats);
+                return ConditionalBuilder(
+                  loadingState: !snap.hasData,
+                  emptyState: snap.hasData && snap.data!.isEmpty,
+                  emptyBuilder: (_) => const EmptyChats(),
+                  successBuilder: (_) => ConversationList(chats: snap.data!),
+                );
               },
             ),
           ),

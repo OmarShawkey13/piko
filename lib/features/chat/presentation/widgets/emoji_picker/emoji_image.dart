@@ -16,8 +16,9 @@ class EmojiImage extends StatelessWidget {
       asset,
       width: size,
       height: size,
-      cacheWidth: (size * 2.5).toInt(),
-      filterQuality: FilterQuality.none,
+      cacheWidth: 66,
+      cacheHeight: 66,
+      filterQuality: FilterQuality.medium,
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
 
 class PreviewImageLoading extends StatelessWidget {
   final ImageChunkEvent? loadingProgress;
@@ -7,19 +8,10 @@ class PreviewImageLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = loadingProgress?.expectedTotalBytes != null
-        ? loadingProgress!.cumulativeBytesLoaded /
-              loadingProgress!.expectedTotalBytes!
-        : null;
-
-    return Center(
-      child: SizedBox(
-        width: 50,
-        height: 50,
-        child: CircularProgressIndicator(
-          value: progress,
-          color: Colors.white,
-        ),
+    return const Center(
+      child: LoadingIndicator(
+        size: 50,
+        color: Colors.white,
       ),
     );
   }

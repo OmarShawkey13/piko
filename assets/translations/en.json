@@ -62,5 +62,7 @@
   "delete_message_confirm": "Are you sure you want to delete this message?",
   "delete_for_me": "Delete for me",
   "delete_for_everyone": "Delete for everyone",
-  "yesterday": "Yesterday"
+  "yesterday": "Yesterday",
+  "read_more": "Read more",
+  "read_less": "Read less"
 }

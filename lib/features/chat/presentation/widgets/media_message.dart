@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:piko/core/theme/colors.dart';
+import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
 import 'package:piko/features/chat/presentation/widgets/blurred_image_background.dart';
 import 'package:piko/features/chat/presentation/widgets/media_download_controls.dart';
 import 'package:piko/features/chat/presentation/widgets/media_placeholder.dart';
@@ -198,7 +199,7 @@ class _MediaMessageState extends State<MediaMessage> {
             ),
             if (widget.isUploading)
               _buildOverlay(
-                const CircularProgressIndicator(color: ColorsManager.primary),
+                const LoadingIndicator(color: ColorsManager.primary),
               ),
           ],
         ),

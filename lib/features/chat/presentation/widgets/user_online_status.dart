@@ -65,7 +65,8 @@ class UserOnlineStatus extends StatelessWidget {
           .replaceAll("{n}", diff.inMinutes.toString());
     }
 
-    final isYesterday = now.day - date.day == 1 &&
+    final isYesterday =
+        now.day - date.day == 1 &&
         now.month == date.month &&
         now.year == date.year;
 

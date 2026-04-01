@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:piko/core/utils/constants/constants.dart';
+import 'package:piko/core/utils/constants/primary/primary_button.dart';
 import 'package:piko/core/utils/constants/routes.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
@@ -8,7 +10,6 @@ import 'package:piko/core/utils/cubit/auth/auth_state.dart';
 import 'package:piko/core/utils/cubit/theme/theme_cubit.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
 import 'package:piko/features/login/presentation/widgets/email_field.dart';
-import 'package:piko/features/login/presentation/widgets/login_button.dart';
 import 'package:piko/features/login/presentation/widgets/login_header.dart';
 import 'package:piko/features/login/presentation/widgets/password_field.dart';
 
@@ -59,9 +60,14 @@ class LoginScreen extends StatelessWidget {
                       verticalSpace20,
                       const PasswordField(),
                       verticalSpace30,
-                      LoginButton(
-                        formKey: formKey,
+                      PrimaryButton(
+                        text: appTranslation().get('login'),
                         isLoading: state is AuthLoginLoadingState,
+                        onPressed: () {
+                          if (formKey.currentState!.validate()) {
+                            authCubit.login();
+                          }
+                        },
                       ),
                     ],
                   ),

@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:piko/core/utils/extensions/context_extension.dart';
+import 'package:piko/core/utils/constants/primary/primary_app_bar.dart';
 
 class ImagePreviewPage extends StatelessWidget {
   final String imagePath;
@@ -17,13 +17,9 @@ class ImagePreviewPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
+      appBar: const PrimaryAppBar(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white, size: 28),
-          onPressed: () => context.pop,
-        ),
+        leading: CloseButton(color: Colors.white),
       ),
       body: Center(
         child: Hero(

@@ -4,6 +4,8 @@ abstract class HomeStates {}
 
 class HomeInitialState extends HomeStates {}
 
+class HomeChangeScaleState extends HomeStates {}
+
 // Search
 class SearchInitialState extends HomeStates {}
 

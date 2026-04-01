@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:piko/core/models/chat_model.dart';
 import 'package:piko/core/theme/colors.dart';
+import 'package:piko/core/utils/constants/primary/primary_circle_avatar.dart';
 
 class ConversationAvatar extends StatelessWidget {
   final ChatModel chat;
@@ -23,14 +23,13 @@ class ConversationAvatar extends StatelessWidget {
       onLongPressEnd: (_) => onLongPressEnd(),
       child: Stack(
         children: [
-          CircleAvatar(
+          PrimaryCircleAvatar(
+            imageUrl: chat.photoUrl,
+            name: chat.displayName,
             radius: 26,
-            backgroundImage: chat.photoUrl.isNotEmpty
-                ? CachedNetworkImageProvider(chat.photoUrl)
-                : null,
-            child: chat.photoUrl.isEmpty
-                ? const Icon(Icons.person, size: 28)
-                : null,
+            iconSize: 28,
+            useCachedImage: true,
+            fallbackIcon: Icons.person,
           ),
           OnlineIndicator(userId: chat.uid),
         ],

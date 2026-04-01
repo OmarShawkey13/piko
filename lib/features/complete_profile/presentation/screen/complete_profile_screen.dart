@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/utils/constants/constants.dart';
+import 'package:piko/core/utils/constants/primary/primary_app_bar.dart';
+import 'package:piko/core/utils/constants/primary/primary_button.dart';
 import 'package:piko/core/utils/constants/routes.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
@@ -9,7 +10,6 @@ import 'package:piko/core/utils/cubit/auth/auth_state.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
 import 'package:piko/features/complete_profile/presentation/widgets/display_name_field.dart';
 import 'package:piko/features/complete_profile/presentation/widgets/profile_image_picker.dart';
-import 'package:piko/features/complete_profile/presentation/widgets/save_button.dart';
 
 class CompleteProfileScreen extends StatelessWidget {
   const CompleteProfileScreen({super.key});
@@ -17,13 +17,9 @@ class CompleteProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        foregroundColor: ColorsManager.textPrimary,
-        title: Text(
-          appTranslation().get('complete_profile'),
-        ),
-        centerTitle: true,
+      appBar: PrimaryAppBar(
+        title: appTranslation().get('complete_profile'),
+        showBackButton: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
@@ -44,8 +40,10 @@ class CompleteProfileScreen extends StatelessWidget {
                 }
               },
               builder: (context, state) {
-                return SaveButton(
+                return PrimaryButton(
+                  text: appTranslation().get('save'),
                   isLoading: state is AuthCompleteProfileLoadingState,
+                  onPressed: () => authCubit.updateProfileData(isInitial: true),
                 );
               },
             ),

@@ -5,6 +5,7 @@ import 'package:piko/core/models/user_model.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
+import 'package:piko/core/utils/constants/primary/primary_text_form_field.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
 import 'package:piko/core/utils/cubit/chat/chat_cubit.dart';
@@ -191,7 +192,7 @@ class _MessageInputState extends State<MessageInput> {
                                 ),
                               ),
                               Expanded(
-                                child: TextField(
+                                child: PrimaryTextFormField(
                                   controller: widget.controller,
                                   focusNode: inputFocusNode,
                                   minLines: 1,
@@ -213,21 +214,19 @@ class _MessageInputState extends State<MessageInput> {
                                       isTyping: value.trim().isNotEmpty,
                                     );
                                   },
-                                  decoration: InputDecoration(
-                                    hintText: appTranslation().get(
-                                      "message_hint",
-                                    ),
-                                    border: InputBorder.none,
-                                    hintStyle: TextStylesManager.regular14
-                                        .copyWith(
-                                          color: isDark
-                                              ? ColorsManager.darkTextSecondary
-                                              : ColorsManager
-                                                    .lightTextSecondary,
-                                        ),
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
+                                  hintText: appTranslation().get(
+                                    "message_hint",
+                                  ),
+                                  hintStyle: TextStylesManager.regular14
+                                      .copyWith(
+                                        color: isDark
+                                            ? ColorsManager.darkTextSecondary
+                                            : ColorsManager.lightTextSecondary,
+                                      ),
+                                  filled: false,
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
                                   ),
                                 ),
                               ),

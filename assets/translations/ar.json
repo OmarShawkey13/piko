@@ -62,5 +62,7 @@
   "delete_message_confirm": "هل أنت متأكد من حذف هذه الرسالة؟",
   "delete_for_me": "حذف لدي",
   "delete_for_everyone": "حذف لدى الجميع",
-  "yesterday": "أمس"
+  "yesterday": "أمس",
+  "read_more": "قراءة المزيد",
+  "read_less": "قراءة أقل"
 }

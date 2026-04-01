@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
+import 'package:piko/core/utils/constants/primary/primary_app_bar.dart';
+import 'package:piko/core/utils/constants/primary/primary_circle_avatar.dart';
 import 'package:piko/core/utils/constants/routes.dart';
 import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
 import 'package:piko/core/utils/cubit/theme/theme_cubit.dart';
@@ -18,15 +20,14 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       builder: (context, state) {
         final isDark = themeCubit.isDarkMode;
         final user = authCubit.currentUserModel;
-        return AppBar(
+        return PrimaryAppBar(
           backgroundColor: isDark
               ? ColorsManager.darkBackground
               : ColorsManager.lightBackground,
           elevation: 0,
-          scrolledUnderElevation: 2,
-          surfaceTintColor: ColorsManager.primary,
           centerTitle: false,
-          title: Text(
+          showBackButton: false,
+          titleWidget: Text(
             appTranslation().get("app_name"),
             style: TextStylesManager.bold24.copyWith(
               color: ColorsManager.primary,
@@ -60,19 +61,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     width: 2,
                   ),
                 ),
-                child: CircleAvatar(
+                child: PrimaryCircleAvatar(
+                  imageUrl: user?.photoUrl,
                   radius: 18,
+                  iconSize: 20,
                   backgroundColor: ColorsManager.primary.withValues(alpha: 0.1),
-                  backgroundImage: (user?.photoUrl.isNotEmpty ?? false)
-                      ? NetworkImage(user!.photoUrl)
-                      : null,
-                  child: (user?.photoUrl.isEmpty ?? true)
-                      ? const Icon(
-                          Icons.person_rounded,
-                          size: 20,
-                          color: ColorsManager.primary,
-                        )
-                      : null,
                 ),
               ),
             ),

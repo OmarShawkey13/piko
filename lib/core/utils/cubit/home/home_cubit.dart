@@ -20,6 +20,15 @@ class HomeCubit extends Cubit<HomeStates> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   Timer? _debounce;
 
+  double scale = 1.0;
+  String? activeId;
+
+  void changeScale(String id, double value) {
+    activeId = id;
+    scale = value;
+    emit(HomeChangeScaleState());
+  }
+
   void searchUsername(String username) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 

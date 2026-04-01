@@ -1,9 +1,14 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:piko/core/theme/colors.dart';
+import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
-import 'package:piko/core/utils/constants/primary/conditional_builder.dart';
+import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
+import 'package:piko/core/utils/constants/primary/primary_app_bar.dart';
+import 'package:piko/core/utils/constants/primary/primary_button.dart';
+import 'package:piko/core/utils/constants/primary/primary_circle_avatar.dart';
+import 'package:piko/core/utils/constants/primary/primary_text_form_field.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
 import 'package:piko/core/utils/cubit/auth/auth_state.dart';
@@ -17,107 +22,111 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final _nameController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _bioController = TextEditingController();
-
-  // مخزن لينك الصورة بعد التغيير
-  String? _photoUrl;
-
   @override
   void initState() {
     super.initState();
-    final user = authCubit.currentUserModel!;
-
-    _nameController.text = user.displayName;
-    _usernameController.text = user.username;
-    _bioController.text = user.bio;
-    _photoUrl = user.photoUrl;
-  }
-
-  /// --------------------- PICK IMAGE ---------------------
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery);
-    if (file != null) {
-      final uploadedUrl = await authCubit.uploadProfileImage(File(file.path));
-      setState(() {
-        _photoUrl = uploadedUrl; // نحفظ اللينك
-      });
-    }
+    authCubit.initEditProfile();
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthStates>(
       listener: (context, state) {
-        if (state is AuthEditProfileSuccessState) context.pop;
+        if (state is AuthEditProfileSuccessState) {
+          context.pop;
+          _showSnackBar(
+            context,
+            'تم تحديث الملف الشخصي بنجاح',
+            ColorsManager.success,
+          );
+        }
+        if (state is AuthEditProfileErrorState) {
+          _showSnackBar(context, state.error, ColorsManager.error);
+        }
       },
       builder: (context, state) {
-        final loading = state is AuthEditProfileLoadingState;
+        final cubit = authCubit;
+        final isLoading = state is AuthEditProfileLoadingState;
+        final isUploading = state is AuthUploadImageLoadingState;
         return Scaffold(
-          appBar: AppBar(
-            title: Text(appTranslation().get('edit_profile')),
-            centerTitle: true,
+          appBar: PrimaryAppBar(
+            title: appTranslation().get('edit_profile'),
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Center(
-                  child: GestureDetector(
-                    onTap: _pickImage,
-                    child: CircleAvatar(
-                      radius: 55,
-                      backgroundImage:
-                          _photoUrl != null && _photoUrl!.isNotEmpty
-                          ? NetworkImage(_photoUrl!)
-                          : null,
-                      child: (_photoUrl == null || _photoUrl!.isEmpty)
-                          ? const Icon(Icons.person, size: 60)
-                          : null,
+          body: GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  children: [
+                    verticalSpace30,
+                    _buildProfileImage(cubit, isUploading),
+                    verticalSpace40,
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: ColorsManager.cardColor,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle(
+                            appTranslation().get('display_name'),
+                          ),
+                          verticalSpace10,
+                          _buildTextField(
+                            controller: cubit.displayNameController,
+                            hint: 'أدخل اسمك',
+                            icon: Icons.person_outline_rounded,
+                          ),
+                          verticalSpace20,
+                          _buildSectionTitle(appTranslation().get('username')),
+                          verticalSpace10,
+                          _buildTextField(
+                            controller: cubit.usernameController,
+                            hint: '@username',
+                            icon: Icons.alternate_email_rounded,
+                            prefixText: '@',
+                          ),
+                          verticalSpace20,
+                          _buildSectionTitle(appTranslation().get('bio')),
+                          verticalSpace10,
+                          _buildTextField(
+                            controller: cubit.bioController,
+                            hint: 'أخبرنا شيئاً عنك...',
+                            icon: Icons.edit_note_rounded,
+                            maxLines: 3,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-                verticalSpace30,
-                _inputField(
-                  appTranslation().get('display_name'),
-                  _nameController,
-                ),
-                _inputField(
-                  appTranslation().get('username'),
-                  _usernameController,
-                ),
-                _inputField(
-                  appTranslation().get('bio'),
-                  _bioController,
-                  maxLines: 3,
-                ),
-                verticalSpace20,
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: loading
-                        ? null
-                        : () {
-                            authCubit.updateProfile(
-                              displayName: _nameController.text.trim(),
-                              username: _usernameController.text.trim(),
-                              bio: _bioController.text.trim(),
-                              photoUrl: _photoUrl ?? "",
-                            );
-                          },
-                    child: ConditionalBuilder(
-                      loadingState: loading,
-                      loadingBuilder: (_) => const CircularProgressIndicator(
+                    verticalSpace40,
+                    PrimaryButton(
+                      text: appTranslation().get('save_changes'),
+                      isLoading: isLoading,
+                      height: 56,
+                      borderRadius: 16,
+                      textStyle: TextStylesManager.bold16.copyWith(
                         color: Colors.white,
                       ),
-                      successBuilder: (_) =>
-                          Text(appTranslation().get('save_changes')),
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        cubit.updateProfileData();
+                      },
                     ),
-                  ),
+                    verticalSpace40,
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
@@ -125,22 +134,136 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  /// ---------------- INPUT FIELD WIDGET ----------------
-  Widget _inputField(
-    String label,
-    TextEditingController controller, {
-    int maxLines = 1,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildProfileImage(AuthCubit cubit, bool isUploading) {
+    return Center(
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: ColorsManager.primary.withValues(alpha: 0.2),
+                width: 2,
+              ),
+            ),
+            child: PrimaryCircleAvatar(
+              imageUrl: cubit.profileImageUrl,
+              radius: 65,
+              iconSize: 70,
+              backgroundColor: ColorsManager.isDark
+                  ? ColorsManager.darkCard
+                  : Colors.grey[200],
+              child: isUploading
+                  ? Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.black26,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const LoadingIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    )
+                  : null,
+            ),
           ),
+          Positioned(
+            bottom: 5,
+            right: 5,
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                cubit.pickProfileImage();
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: ColorsManager.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: ColorsManager.cardColor,
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: ColorsManager.primary.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStylesManager.bold14.copyWith(
+        color: ColorsManager.textPrimary.withValues(alpha: 0.8),
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    String? prefixText,
+  }) {
+    return PrimaryTextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      hintText: hint,
+      prefixText: prefixText,
+      prefixIcon: Icon(
+        icon,
+        color: ColorsManager.primary.withValues(alpha: 0.7),
+        size: 20,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: ColorsManager.borderColor.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ColorsManager.primary, width: 1.5),
+      ),
+    );
+  }
+
+  void _showSnackBar(BuildContext context, String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStylesManager.medium14.copyWith(color: Colors.white),
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );

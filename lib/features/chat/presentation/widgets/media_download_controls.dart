@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
+import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 
 class MediaDownloadButton extends StatelessWidget {
@@ -37,7 +38,7 @@ class MediaDownloadProgress extends StatelessWidget {
         return Stack(
           alignment: Alignment.center,
           children: [
-            CircularProgressIndicator(
+            LoadingIndicator(
               value: progress,
               strokeWidth: 3,
               color: ColorsManager.primary,

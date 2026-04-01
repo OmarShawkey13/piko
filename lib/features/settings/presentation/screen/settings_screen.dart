@@ -5,6 +5,8 @@ import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
 import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
+import 'package:piko/core/utils/constants/primary/primary_app_bar.dart';
+import 'package:piko/core/utils/constants/primary/primary_button.dart';
 import 'package:piko/core/utils/constants/routes.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
@@ -31,32 +33,13 @@ class SettingsScreen extends StatelessWidget {
         }
 
         return Scaffold(
-          backgroundColor: isDark
-              ? ColorsManager.darkBackground
-              : ColorsManager.lightBackground,
           body: CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              SliverAppBar(
-                expandedHeight: 0,
-                floating: true,
-                backgroundColor: isDark
-                    ? ColorsManager.darkBackground
-                    : ColorsManager.lightBackground,
-                elevation: 0,
-                leading: IconButton(
-                  onPressed: () => context.pop,
-                  icon: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: isDark ? Colors.white : Colors.black,
-                    size: 20,
-                  ),
-                ),
-                title: Text(
-                  appTranslation().get('settings'),
-                  style: TextStylesManager.bold20.copyWith(
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
+              SliverToBoxAdapter(
+                child: PrimaryAppBar(
+                  elevation: 0,
+                  title: appTranslation().get('settings'),
                 ),
               ),
               SliverToBoxAdapter(
@@ -193,22 +176,17 @@ class SettingsScreen extends StatelessWidget {
               style: TextStyle(color: isDark ? Colors.white70 : Colors.grey),
             ),
           ),
-          ElevatedButton(
+          PrimaryButton(
+            width: null,
+            text: "Logout",
+            backgroundColor: ColorsManager.error,
+            borderRadius: 12,
             onPressed: () {
               FirebaseAuth.instance.signOut().then((_) {
                 if (!context.mounted) return;
                 context.pushReplacement<Object>(Routes.login);
               });
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ColorsManager.error,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text("Logout"),
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
+import 'package:piko/core/utils/constants/primary/primary_button.dart';
 
 class OnBoardingFooter extends StatelessWidget {
   final bool isLast;
@@ -36,10 +37,9 @@ class OnBoardingFooter extends StatelessWidget {
           ),
 
           // Button
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-            ),
+          PrimaryButton(
+            width: null,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
             onPressed: isLast ? onStart : onNext,
             child: isLast
                 ? Text(

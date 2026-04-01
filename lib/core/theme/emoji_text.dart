@@ -39,17 +39,13 @@ class EmojiText extends StatelessWidget {
     final fontSize = effectiveStyle.fontSize ?? 14.0;
     final spans = <InlineSpan>[];
 
-    // 🚀 استخدام .characters للتعامل مع الـ Grapheme Clusters
-    // دي أدق طريقة في فلوتر عشان يقرأ الإيموجي مع لون البشرة كحرف واحد (Cluster)
     final characters = text.characters;
-
     final StringBuffer textBuffer = StringBuffer();
 
     for (final char in characters) {
       final assetPath = EmojiData.getEmojiPath(char);
 
       if (assetPath != null) {
-        // لو في نص متجمع قبله حطه في TextSpan واحد عشان الأداء
         if (textBuffer.isNotEmpty) {
           spans.add(
             TextSpan(text: textBuffer.toString(), style: effectiveStyle),
@@ -57,7 +53,6 @@ class EmojiText extends StatelessWidget {
           textBuffer.clear();
         }
 
-        // إضافة صورة الإيموجي
         spans.add(
           WidgetSpan(
             alignment: PlaceholderAlignment.middle,
@@ -66,9 +61,12 @@ class EmojiText extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 1.5),
               child: Image.asset(
                 assetPath,
-                width: fontSize * 1.3, // حجم أكبر شوية عشان الوضوح
+                width: fontSize * 1.3,
                 height: fontSize * 1.3,
-                cacheWidth: (fontSize * 3).toInt(), // تقليل استهلاك الرام
+                isAntiAlias: true,
+                filterQuality: FilterQuality.medium,
+                // 🚀 محاولة إزالة الحواف السوداء عن طريق تحسين الرندرة
+                cacheWidth: (fontSize * 3).toInt(),
                 errorBuilder: (context, error, stackTrace) =>
                     Text(char, style: effectiveStyle),
               ),
@@ -76,12 +74,10 @@ class EmojiText extends StatelessWidget {
           ),
         );
       } else {
-        // لو مش إيموجي حطه في الـ buffer
         textBuffer.write(char);
       }
     }
 
-    // إضافة باقي النص لو موجود
     if (textBuffer.isNotEmpty) {
       spans.add(TextSpan(text: textBuffer.toString(), style: effectiveStyle));
     }
