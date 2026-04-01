@@ -24,6 +24,8 @@ class PrimaryTextFormField extends StatelessWidget {
   final TextStyle? hintStyle;
   final void Function(String)? onChanged;
   final FocusNode? focusNode;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   const PrimaryTextFormField({
     super.key,
@@ -47,6 +49,8 @@ class PrimaryTextFormField extends StatelessWidget {
     this.hintStyle,
     this.onChanged,
     this.focusNode,
+    this.readOnly = false,
+    this.onTap,
   });
 
   @override
@@ -55,9 +59,7 @@ class PrimaryTextFormField extends StatelessWidget {
     return Container(
       decoration: (border == null && !filled)
           ? BoxDecoration(
-              color:
-                  fillColor ??
-                  (isDark ? ColorsManager.darkCard : ColorsManager.lightCard),
+              color: fillColor ?? (ColorsManager.cardColor),
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 if (!isDark)
@@ -78,6 +80,8 @@ class PrimaryTextFormField extends StatelessWidget {
         minLines: minLines,
         onChanged: onChanged,
         focusNode: focusNode,
+        readOnly: readOnly,
+        onTap: onTap,
         style:
             style ??
             TextStylesManager.medium16.copyWith(
@@ -98,7 +102,7 @@ class PrimaryTextFormField extends StatelessWidget {
               fillColor ??
               (border != null
                   ? (isDark
-                        ? Colors.white.withValues(alpha: 0.05)
+                        ? ColorsManager.white.withValues(alpha: 0.05)
                         : Colors.grey[50])
                   : Colors.transparent),
           contentPadding:

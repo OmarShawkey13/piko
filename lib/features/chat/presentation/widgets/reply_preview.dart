@@ -28,8 +28,7 @@ class ReplyPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isDarkMode =
-        isDark ?? Theme.of(context).brightness == Brightness.dark;
+    final bool isDarkMode = isDark ?? ColorsManager.isDark;
 
     // استخراج البيانات بناءً على المصدر
     final String displaySender = replyingMessage != null
@@ -47,23 +46,23 @@ class ReplyPreview extends StatelessWidget {
     final Color accentColor = isInInput
         ? ColorsManager.primary
         : (isMe == true
-              ? Colors.white.withValues(alpha: 0.9)
+              ? ColorsManager.white.withValues(alpha: 0.9)
               : ColorsManager.primary);
 
     final Color bgColor = isInInput
         ? (isDarkMode
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.05))
+              ? ColorsManager.white.withValues(alpha: 0.08)
+              : ColorsManager.black.withValues(alpha: 0.05))
         : (isMe == true
-              ? Colors.black.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05));
+              ? ColorsManager.black.withValues(alpha: 0.1)
+              : ColorsManager.black.withValues(alpha: 0.05));
 
     final Color textColor = isInInput
         ? (isDarkMode
               ? ColorsManager.darkTextSecondary
               : ColorsManager.lightTextSecondary)
         : (isMe == true
-              ? Colors.white.withValues(alpha: 0.7)
+              ? ColorsManager.white.withValues(alpha: 0.7)
               : ColorsManager.lightTextSecondary);
 
     return GestureDetector(

@@ -49,6 +49,13 @@ class _MessagesListState extends State<MessagesList> {
       builder: (_, snap) {
         return ConditionalBuilder(
           loadingState: !snap.hasData,
+          emptyState: snap.hasData && snap.data!.isEmpty,
+          emptyBuilder: (context) => const Center(
+            child: Text(
+              'لا توجد رسائل بعد.. ابدأ المحادثة الآن!',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
           successBuilder: (_) {
             final messages = snap.data!;
             return ListView.builder(

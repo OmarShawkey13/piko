@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:piko/core/di/injections.dart';
 import 'package:piko/core/models/user_model.dart';
 import 'package:piko/core/theme/emoji_controller.dart';
-import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
+import 'package:piko/core/utils/constants/primary/conditional_builder.dart';
 import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
 import 'package:piko/core/utils/cubit/auth/auth_state.dart';
 import 'package:piko/core/utils/cubit/chat/chat_cubit.dart';
@@ -53,58 +53,62 @@ class _ChatScreenState extends State<ChatScreen> {
             state is AuthGetUserErrorState,
         builder: (context, state) {
           final myUser = authCubit.currentUserModel;
-          if (myUser == null) {
-            return const Scaffold(body: LoadingIndicator());
-          }
-          final chatCubit = ChatCubit.get(context);
-          return Scaffold(
-            appBar: ChatAppBar(user: widget.user),
-            body: BlocBuilder<ChatCubit, ChatStates>(
-              buildWhen: (_, state) => state is ChatBackgroundChangedState,
-              builder: (context, state) {
-                return Container(
-                  decoration: chatCubit.chatBackgroundBytes != null
-                      ? BoxDecoration(
-                          image: DecorationImage(
-                            image: MemoryImage(chatCubit.chatBackgroundBytes!),
-                            fit: BoxFit.cover,
+          return ConditionalBuilder(
+            loadingState: myUser == null,
+            successBuilder: (context) {
+              final chatCubit = ChatCubit.get(context);
+              return Scaffold(
+                appBar: ChatAppBar(user: widget.user),
+                body: BlocBuilder<ChatCubit, ChatStates>(
+                  buildWhen: (_, state) => state is ChatBackgroundChangedState,
+                  builder: (context, state) {
+                    return Container(
+                      decoration: chatCubit.chatBackgroundBytes != null
+                          ? BoxDecoration(
+                              image: DecorationImage(
+                                image: MemoryImage(
+                                  chatCubit.chatBackgroundBytes!,
+                                ),
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : null,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: RepaintBoundary(
+                              child: MessagesList(
+                                myId: myUser!.uid,
+                                otherId: widget.user.uid,
+                              ),
+                            ),
                           ),
-                        )
-                      : null,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: RepaintBoundary(
-                          child: MessagesList(
+                          MessageInput(
+                            controller: messageController,
+                            isDark: themeCubit.isDarkMode,
                             myId: myUser.uid,
                             otherId: widget.user.uid,
-                          ),
-                        ),
-                      ),
-                      MessageInput(
-                        controller: messageController,
-                        isDark: themeCubit.isDarkMode,
-                        myId: myUser.uid,
-                        otherId: widget.user.uid,
-                        otherUser: widget.user,
-                        onSend: () {
-                          final text = messageController.text.trim();
-                          if (text.isEmpty) return;
-                          chatCubit.sendMessage(
-                            myId: myUser.uid,
-                            otherId: widget.user.uid,
-                            text: text,
-                            myUser: myUser,
                             otherUser: widget.user,
-                          );
-                          messageController.clear();
-                        },
+                            onSend: () {
+                              final text = messageController.text.trim();
+                              if (text.isEmpty) return;
+                              chatCubit.sendMessage(
+                                myId: myUser.uid,
+                                otherId: widget.user.uid,
+                                text: text,
+                                myUser: myUser,
+                                otherUser: widget.user,
+                              );
+                              messageController.clear();
+                            },
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                    );
+                  },
+                ),
+              );
+            },
           );
         },
       ),

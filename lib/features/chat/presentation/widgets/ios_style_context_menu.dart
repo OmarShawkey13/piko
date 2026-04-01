@@ -115,8 +115,8 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
     }
   }
 
-  TextStyle getTextStyle(BuildContext context, bool isDelete) {
-    final baseColor = isDelete
+  TextStyle getTextStyle(BuildContext context, bool isDestructive) {
+    final baseColor = isDestructive
         ? ColorsManager.error
         : widget.textStyle?.color ??
               (widget.isDark ?? false
@@ -126,17 +126,17 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
     return widget.textStyle?.copyWith(
           color: baseColor,
           fontSize: fontSize,
-          fontWeight: isDelete ? FontWeight.w500 : FontWeight.normal,
+          fontWeight: isDestructive ? FontWeight.w500 : FontWeight.normal,
         ) ??
         TextStyle(
           color: baseColor,
           fontSize: fontSize,
-          fontWeight: isDelete ? FontWeight.w500 : FontWeight.normal,
+          fontWeight: isDestructive ? FontWeight.w500 : FontWeight.normal,
         );
   }
 
-  Color getIconColor(bool isDelete) {
-    return isDelete
+  Color getIconColor(bool isDestructive) {
+    return isDestructive
         ? ColorsManager.error
         : widget.iconColor ??
               (widget.isDark ?? false
@@ -229,9 +229,7 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                 ),
                               ...List.generate(currentMenu.length, (index) {
                                 final action = currentMenu[index];
-                                final isDelete = action.label
-                                    .toLowerCase()
-                                    .contains('delete');
+                                final isDestructive = action.isDestructive;
                                 return FadeTransition(
                                   opacity: actionAnimations[index],
                                   child: SlideTransition(
@@ -282,7 +280,7 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                                   action.label,
                                                   style: getTextStyle(
                                                     context,
-                                                    isDelete,
+                                                    isDestructive,
                                                   ),
                                                 ),
                                                 Row(
@@ -292,7 +290,7 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                                     Icon(
                                                       action.icon,
                                                       color: getIconColor(
-                                                        isDelete,
+                                                        isDestructive,
                                                       ),
                                                     ),
                                                   ],
@@ -304,16 +302,17 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                         if (index != currentMenu.length - 1)
                                           Divider(
                                             height: 1,
-                                            color:
-                                                widget.dividerColor ??
+                                            thickness: 1,
+                                            color: widget.dividerColor ??
                                                 (widget.isDark ?? false
-                                                    ? ColorsManager
-                                                          .darkTextSecondary
-                                                          .withValues(
-                                                            alpha: 0.12,
-                                                          )
-                                                    : ColorsManager
-                                                          .bubbleOtherLight),
+                                                    ? ColorsManager.white
+                                                        .withValues(
+                                                          alpha: 0.1,
+                                                        )
+                                                    : ColorsManager.black
+                                                        .withValues(
+                                                          alpha: 0.1,
+                                                        )),
                                           ),
                                       ],
                                     ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:piko/core/theme/colors.dart';
-import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
 import 'package:piko/core/utils/constants/primary/primary_app_bar.dart';
 import 'package:piko/core/utils/constants/primary/primary_circle_avatar.dart';
@@ -8,6 +7,7 @@ import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/models/user_model.dart';
 import 'package:piko/core/utils/cubit/chat/chat_cubit.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
+import 'package:piko/features/chat/presentation/widgets/chat_user_name.dart';
 import 'package:piko/features/chat/presentation/widgets/user_online_status.dart';
 
 class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -18,8 +18,6 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return PrimaryAppBar(
-      elevation: 0.5,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       centerTitle: false,
       leading: IconButton(
         onPressed: () => context.pop,
@@ -45,7 +43,7 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildUserName(),
+                  ChatUserName(user: user),
                   UserOnlineStatus(userId: user.uid),
                 ],
               ),
@@ -64,18 +62,6 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         horizontalSpace8,
       ],
-    );
-  }
-
-  Widget _buildUserName() {
-    return Text(
-      user.displayName.isNotEmpty ? user.displayName : user.username,
-      style: TextStylesManager.bold16.copyWith(
-        color: ColorsManager.textPrimary,
-        height: 1.1,
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
     );
   }
 

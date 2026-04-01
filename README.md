@@ -33,7 +33,13 @@
 - **Message Status:** تتبع حالة الرسالة (ارسال، وصول، قراءة) بدقة.
 - **Online/Offline Status:** عرض حالة المستخدم (متصل الآن) في الوقت الفعلي.
 - **Emoji Picker:** منتقي رموز تعبيرية (Emoji) مدمج ومخصص يدعم التصنيفات المختلفة لسهولة التعبير.
-- **iOS Style Context Menu:** قائمة خيارات متقدمة عند الضغط المطول على الرسائل بتصميم iOS الجذاب.
+- **iOS Style Context Menu:** قائمة خيارات متقدمة عند الضغط المطول على الرسائل بتصميم iOS الجذاب، تدعم القوائم الفرعية (Sub-menus) والعمليات التدميرية.
+- **Chat Background Customization:** إمكانية تخصيص خلفية المحادثة لكل مستخدم مع حفظها محلياً.
+- **Interactive Image Preview:** صفحة مخصصة لمعاينة الصور تدعم التكبير والتصغير (Zoom) باستخدام `InteractiveViewer`.
+- **Chat Peek & Preview:** إمكانية إلقاء نظرة سريعة على المحادثة (Preview) من القائمة الرئيسية دون الدخول إليها، مع تأثيرات ضبابية (Blur) جذابة.
+
+### 🔍 البحث والتواصل (Search & Discovery)
+- **User Search:** نظام بحث متطور يسمح بالعثور على المستخدمين الآخرين باستخدام اسم المستخدم أو البريد الإلكتروني لبدء محادثات جديدة فوراً.
 
 ### 🔔 الإشعارات والتنبيهات (Notifications)
 - **Push Notifications:** دمج كامل مع `OneSignal` لاستقبال الإشعارات حتى عند إغلاق التطبيق.
@@ -42,14 +48,14 @@
 
 ### 🔐 التوثيق والملف الشخصي (Auth & Profile)
 - **Firebase Auth:** تسجيل دخول وتسجيل حساب جديد آمن.
-- **Profile Completion:** واجهة مخصصة لإكمال بيانات المستخدم (الصورة الشخصية، الاسم، النبذة).
-- **Image Cropping/Picking:** دعم اختيار الصور من المعرض أو الكاميرا وتعيينها كصورة شخصية.
+- **Profile Management:** نظام متكامل لإدارة الملف الشخصي يشمل تعديل الاسم، اسم المستخدم الفريد (@username)، والنبذة الشخصية (Bio).
+- **Image Cropping/Picking:** دعم اختيار الصور من المعرض أو الكاميرا وتعيينها كصورة شخصية مع معالجة الرفع في الخلفية.
 
 ### 🌍 التخصيص وتجربة المستخدم (UI/UX)
 - **Localization:** دعم ثنائي اللغة (عربي/إنجليزي) مع تغيير اتجاه التطبيق بالكامل (RTL/LTR) وحفظ الإعدادات محلياً.
 - **Theme Engine:** نظام ثيمات ذكي يدعم `Dark Mode` و `Light Mode` مع حفظ اختيار المستخدم.
-- **Onboarding Experience:** شاشات تعريفية جذابة تشرح مميزات التطبيق للمستخدمين الجدد (توجد في `assets/images/onboarding`).
-- **Smooth Animations:** انتقالات سلسة ومؤشرات تحميل مخصصة (Blur backgrounds, placeholders).
+- **Onboarding Experience:** شاشات تعريفية جذابة تشرح مميزات التطبيق للمستخدمين الجدد.
+- **Modern UI Components:** استخدام مكثف للتأثيرات البصرية مثل `BackdropFilter` للضبابية، والرسوم المتحركة السلسة في الانتقالات بين الشاشات.
 
 ---
 
@@ -64,14 +70,14 @@
     - `service/`: إدارة `Firebase Services` و `Notification Service`.
 - **`theme/`**: تعريف `AppTheme` للألوان، الخطوط، وأنماط الـ Widgets.
 - **`models/`**: نماذج البيانات الموحدة مثل `MessageModel`, `UserModel`.
-- **`utils/`**: الثوابت، الملحقات (Extensions)، والـ Cubits العامة (Theme, Auth, Home).
+- **`utils/`**: الثوابت، الملحقات (Extensions)، والـ Cubits العامة (Theme, Auth, Home, Chat).
 
 ### 📁 `lib/features/` (الوحدات الوظيفية)
 كل ميزة تحتوي على تقسيم داخلي (Data, Presentation, Widgets):
-- **`chat/`**: تحتوي على أعقد الـ Widgets مثل `MessageBubble`, `TypingIndicator`, `AttachmentMenu`.
-- **`home/`**: إدارة قائمة المحادثات والبحث.
-- **`login/` & `complete_profile/`**: دورة حياة المستخدم.
-- **`settings/`**: إدارة الملف الشخصي واللغة والثيم.
+- **`chat/`**: تحتوي على أعقد الـ Widgets مثل `MessageBubble`, `TypingIndicator`, `AttachmentMenu`, `IosStyleContextMenu`.
+- **`home/`**: إدارة قائمة المحادثات، البحث عن المستخدمين، ونظام معاينة المحادثة (Chat Preview).
+- **`login/` & `complete_profile/`**: دورة حياة المستخدم وتوثيق الحساب.
+- **`settings/`**: إدارة الملف الشخصي المتقدمة، اللغة، والثيم.
 
 ---
 

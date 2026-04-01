@@ -26,7 +26,7 @@ class ConversationItem extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: "ChatPreview",
-      barrierColor: Colors.black.withValues(alpha: 0.4),
+      barrierColor: ColorsManager.black.withValues(alpha: 0.4),
       transitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, anim1, anim2) {
         return ChatPreviewDialog(chat: chat);
@@ -51,12 +51,12 @@ class ConversationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = themeCubit.isDarkMode;
     return BlocBuilder<HomeCubit, HomeStates>(
       buildWhen: (_, state) => state is HomeChangeScaleState,
-      builder: (context, state) {
-        final cubit = HomeCubit.get(context);
+      builder: (context, homeState) {
+        final cubit = homeCubit;
         final isItemActive = cubit.activeId == chat.uid;
-
         return GestureDetector(
           onTapDown: (_) => cubit.changeScale(chat.uid, 0.95),
           onTapUp: (_) => cubit.changeScale(chat.uid, 1.0),
@@ -85,13 +85,13 @@ class ConversationItem extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: themeCubit.isDarkMode
+                color: isDark
                     ? ColorsManager.darkCard
                     : ColorsManager.lightCard,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
+                    color: ColorsManager.black.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -111,6 +111,7 @@ class ConversationItem extends StatelessWidget {
                   ),
                   horizontalSpace14,
                   ConversationInfo(chat: chat),
+                  const Spacer(),
                   ConversationTrailing(chat: chat),
                 ],
               ),

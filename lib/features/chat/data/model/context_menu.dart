@@ -9,11 +9,14 @@ class ContextMenuAndroid {
 
   final List<ContextMenuAndroid>? subMenu;
 
+  final bool isDestructive;
+
   ContextMenuAndroid({
     required this.icon,
     required this.label,
     this.onTap,
     this.subMenu,
+    this.isDestructive = false,
   });
 
   bool get hasSubMenu => subMenu != null && subMenu!.isNotEmpty;

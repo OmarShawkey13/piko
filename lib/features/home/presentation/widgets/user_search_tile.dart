@@ -19,7 +19,7 @@ class UserSearchTile extends StatelessWidget {
     return BlocBuilder<HomeCubit, HomeStates>(
       buildWhen: (_, state) => state is HomeChangeScaleState,
       builder: (context, state) {
-        final cubit = HomeCubit.get(context);
+        final cubit = homeCubit;
         final isItemActive = cubit.activeId == user.uid;
 
         return GestureDetector(

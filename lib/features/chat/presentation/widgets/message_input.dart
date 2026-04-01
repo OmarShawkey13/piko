@@ -155,9 +155,7 @@ class _MessageInputState extends State<MessageInput> {
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? ColorsManager.darkCard
-                            : ColorsManager.white,
+                        color: ColorsManager.cardColor,
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
@@ -224,6 +222,7 @@ class _MessageInputState extends State<MessageInput> {
                                             : ColorsManager.lightTextSecondary,
                                       ),
                                   filled: false,
+                                  fillColor: ColorsManager.cardColor,
                                   border: InputBorder.none,
                                   contentPadding: const EdgeInsets.symmetric(
                                     vertical: 12,
