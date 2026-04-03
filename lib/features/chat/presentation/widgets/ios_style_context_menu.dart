@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:piko/core/theme/colors.dart';
+import 'package:piko/core/utils/constants/constants.dart';
 import 'package:piko/core/utils/constants/spacing.dart';
 import 'package:piko/core/utils/extensions/context_extension.dart';
 import 'package:piko/features/chat/data/model/context_menu.dart';
@@ -224,7 +225,7 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                   leading: const Icon(
                                     Icons.arrow_back_ios_new_outlined,
                                   ),
-                                  title: const Text("Back"),
+                                  title: Text(appTranslation().get("back")),
                                   onTap: closeSubMenu,
                                 ),
                               ...List.generate(currentMenu.length, (index) {
@@ -303,16 +304,17 @@ class _IosStyleContextMenuState extends State<IosStyleContextMenu>
                                           Divider(
                                             height: 1,
                                             thickness: 1,
-                                            color: widget.dividerColor ??
+                                            color:
+                                                widget.dividerColor ??
                                                 (widget.isDark ?? false
                                                     ? ColorsManager.white
-                                                        .withValues(
-                                                          alpha: 0.1,
-                                                        )
+                                                          .withValues(
+                                                            alpha: 0.1,
+                                                          )
                                                     : ColorsManager.black
-                                                        .withValues(
-                                                          alpha: 0.1,
-                                                        )),
+                                                          .withValues(
+                                                            alpha: 0.1,
+                                                          )),
                                           ),
                                       ],
                                     ),

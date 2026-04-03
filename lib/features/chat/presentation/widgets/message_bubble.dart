@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:piko/core/models/message_model.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/utils/cubit/chat/chat_cubit.dart';
@@ -9,10 +10,12 @@ import 'package:piko/features/chat/presentation/widgets/reply_indicator.dart';
 import 'package:piko/features/chat/presentation/widgets/ios_style_context_menu.dart';
 import 'package:piko/features/chat/presentation/widgets/bubble_layout.dart';
 import 'package:piko/features/chat/presentation/widgets/message_bubble_content.dart';
+import 'package:piko/features/chat/presentation/widgets/message_details_sheet.dart';
 import 'package:piko/core/utils/constants/constants.dart';
 
 class MessageBubble extends StatefulWidget {
   final MessageModel msg;
+  final List<MessageModel>? imageGroup;
   final bool isMe;
   final bool allowSwipe;
   final void Function(String messageId)? onReplyTap;
@@ -20,6 +23,7 @@ class MessageBubble extends StatefulWidget {
   const MessageBubble({
     super.key,
     required this.msg,
+    this.imageGroup,
     required this.isMe,
     this.allowSwipe = true,
     this.onReplyTap,
@@ -42,7 +46,7 @@ class MessageBubbleState extends State<MessageBubble> {
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
-    if (!widget.allowSwipe) return;
+    if (!widget.allowSwipe || ChatCubit.get(context).isSelectionMode) return;
     setState(() {
       _dragOffset = (_dragOffset + details.delta.dx).clamp(0.0, 80.0);
       if (_dragOffset >= 50 && !_isReplyTriggered) {
@@ -66,15 +70,19 @@ class MessageBubbleState extends State<MessageBubble> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasMedia =
-        widget.msg.imageUrl != null || widget.msg.localPath != null;
-    final bool hasText = widget.msg.text.trim().isNotEmpty;
-    final bool isImageOnly =
-        hasMedia && !hasText && widget.msg.replyToId == null;
+    final chatCubit = ChatCubit.get(context);
+    final isSelected = chatCubit.selectedMessages.any(
+      (m) => m.id == widget.msg.id,
+    );
+
     return GestureDetector(
       onHorizontalDragUpdate: _onHorizontalDragUpdate,
       onHorizontalDragEnd: _onHorizontalDragEnd,
-      onLongPress: () => _showIosContextMenu(context),
+      onLongPress: () =>
+          !chatCubit.isSelectionMode ? _showIosContextMenu(context) : null,
+      onTap: () => chatCubit.isSelectionMode
+          ? chatCubit.toggleMessageSelection(widget.msg)
+          : null,
       child: RepaintBoundary(
         child: Stack(
           alignment: Alignment.centerLeft,
@@ -89,17 +97,41 @@ class MessageBubbleState extends State<MessageBubble> {
                 duration: const Duration(milliseconds: 400),
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: _isHighlighted
-                      ? ColorsManager.primary.withValues(alpha: 0.1)
-                      : ColorsManager.transparent,
+                  color: isSelected
+                      ? ColorsManager.primary.withValues(alpha: 0.2)
+                      : (_isHighlighted
+                            ? ColorsManager.primary.withValues(alpha: 0.1)
+                            : ColorsManager.transparent),
                 ),
                 child: BubbleLayout(
                   isMe: widget.isMe,
-                  child: MessageBubbleContent(
-                    msg: widget.msg,
-                    isMe: widget.isMe,
-                    isImageOnly: isImageOnly,
-                    onReplyTap: widget.onReplyTap,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (chatCubit.isSelectionMode)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Icon(
+                            isSelected
+                                ? Icons.check_circle_rounded
+                                : Icons.circle_outlined,
+                            color: ColorsManager.primary,
+                            size: 20,
+                          ),
+                        ),
+                      Flexible(
+                        child: MessageBubbleContent(
+                          msg: widget.msg,
+                          imageGroup: widget.imageGroup,
+                          isMe: widget.isMe,
+                          isImageOnly:
+                              widget.msg.imageUrl != null &&
+                              widget.msg.text.trim().isEmpty &&
+                              widget.msg.replyToId == null,
+                          onReplyTap: widget.onReplyTap,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -111,37 +143,62 @@ class MessageBubbleState extends State<MessageBubble> {
   }
 
   void _showIosContextMenu(BuildContext context) {
-    final alignment = widget.isMe ? Alignment.topRight : Alignment.topLeft;
+    final chatCubit = ChatCubit.get(context);
     showDialog<Object>(
       context: context,
       barrierColor: ColorsManager.black.withValues(alpha: 0.3),
-      builder: (_) => IosStyleContextMenu(
-        actions: [
-          ContextMenuAndroid(
-            label: appTranslation().get("reply"),
-            icon: Icons.reply_rounded,
-            onTap: () => ChatCubit.get(context).setReplyingMessage(widget.msg),
+      builder: (dialogContext) => BlocProvider.value(
+        value: chatCubit,
+        child: IosStyleContextMenu(
+          actions: [
+            ContextMenuAndroid(
+              label: appTranslation().get("reply"),
+              icon: Icons.reply_rounded,
+              onTap: () => chatCubit.setReplyingMessage(widget.msg),
+            ),
+            ContextMenuAndroid(
+              label: appTranslation().get("copy"),
+              icon: Icons.copy_rounded,
+              onTap: () =>
+                  Clipboard.setData(ClipboardData(text: widget.msg.text)),
+            ),
+            ContextMenuAndroid(
+              label: appTranslation().get("select"),
+              icon: Icons.check_circle_outline_rounded,
+              onTap: () =>
+                  chatCubit.toggleSelectionMode(initialMessage: widget.msg),
+            ),
+            ContextMenuAndroid(
+              label: appTranslation().get("info"),
+              icon: Icons.info_outline_rounded,
+              onTap: () => _showMessageDetails(context),
+            ),
+            ContextMenuAndroid(
+              label: appTranslation().get("delete"),
+              icon: Icons.delete_outline_rounded,
+              isDestructive: true,
+              onTap: () => _showDeleteDialog(context),
+            ),
+          ],
+          menuAlignment: widget.isMe ? Alignment.topRight : Alignment.topLeft,
+          child: MessageBubble(
+            msg: widget.msg,
+            isMe: widget.isMe,
+            allowSwipe: false,
           ),
-          ContextMenuAndroid(
-            label: appTranslation().get("copy"),
-            icon: Icons.copy_rounded,
-            onTap: () =>
-                Clipboard.setData(ClipboardData(text: widget.msg.text)),
-          ),
-          ContextMenuAndroid(
-            label: appTranslation().get("delete"),
-            icon: Icons.delete_outline_rounded,
-            isDestructive: true,
-            onTap: () => _showDeleteDialog(context),
-          ),
-        ],
-        menuAlignment: alignment,
-        child: MessageBubble(
-          msg: widget.msg,
-          isMe: widget.isMe,
-          allowSwipe: false,
         ),
       ),
+    );
+  }
+
+  void _showMessageDetails(BuildContext context) {
+    showModalBottomSheet<Object>(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => MessageDetailsSheet(msg: widget.msg),
     );
   }
 

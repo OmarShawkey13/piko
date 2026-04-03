@@ -37,50 +37,46 @@ class EmojiText extends StatelessWidget {
 
     final effectiveStyle = DefaultTextStyle.of(context).style.merge(style);
     final fontSize = effectiveStyle.fontSize ?? 14.0;
-    final spans = <InlineSpan>[];
+    final List<InlineSpan> spans = [];
 
-    final characters = text.characters;
-    final StringBuffer textBuffer = StringBuffer();
+    // استخدام splitMapJoin مع RegExp أسرع بكثير من الدوران على كل حرف
+    text.splitMapJoin(
+      EmojiData.emojiRegex,
+      onMatch: (Match match) {
+        final emoji = match.group(0)!;
+        final assetPath = EmojiData.getEmojiPath(emoji);
 
-    for (final char in characters) {
-      final assetPath = EmojiData.getEmojiPath(char);
-
-      if (assetPath != null) {
-        if (textBuffer.isNotEmpty) {
+        if (assetPath != null) {
           spans.add(
-            TextSpan(text: textBuffer.toString(), style: effectiveStyle),
-          );
-          textBuffer.clear();
-        }
-
-        spans.add(
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            baseline: TextBaseline.alphabetic,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 1.5),
-              child: Image.asset(
-                assetPath,
-                width: fontSize * 1.3,
-                height: fontSize * 1.3,
-                isAntiAlias: true,
-                filterQuality: FilterQuality.medium,
-                // 🚀 محاولة إزالة الحواف السوداء عن طريق تحسين الرندرة
-                cacheWidth: (fontSize * 3).toInt(),
-                errorBuilder: (context, error, stackTrace) =>
-                    Text(char, style: effectiveStyle),
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 1.5),
+                child: Image.asset(
+                  assetPath,
+                  width: fontSize * 1.3,
+                  height: fontSize * 1.3,
+                  // تحديد cacheWidth يقلل جداً من استهلاك الذاكرة
+                  cacheWidth: (fontSize * 2.5).toInt(),
+                  filterQuality: FilterQuality.low, // أخف في الرندرة
+                  errorBuilder: (context, error, stackTrace) =>
+                      Text(emoji, style: effectiveStyle),
+                ),
               ),
             ),
-          ),
-        );
-      } else {
-        textBuffer.write(char);
-      }
-    }
-
-    if (textBuffer.isNotEmpty) {
-      spans.add(TextSpan(text: textBuffer.toString(), style: effectiveStyle));
-    }
+          );
+        } else {
+          spans.add(TextSpan(text: emoji, style: effectiveStyle));
+        }
+        return '';
+      },
+      onNonMatch: (String nonMatch) {
+        if (nonMatch.isNotEmpty) {
+          spans.add(TextSpan(text: nonMatch, style: effectiveStyle));
+        }
+        return '';
+      },
+    );
 
     final textScaler = textScaleFactor != null
         ? TextScaler.linear(textScaleFactor!)

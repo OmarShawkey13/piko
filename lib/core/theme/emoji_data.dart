@@ -18,10 +18,24 @@ class EmojiData {
   }
 
   static String? getEmojiPath(String emoji) {
-    if (_emojiMap.containsKey(emoji)) return _emojiMap[emoji];
-    final normalized = emoji.replaceAll('\uFE0F', '');
-    return _emojiMap[normalized];
+    final path = _emojiMap[emoji];
+    if (path != null) return path;
+
+    if (emoji.contains('\uFE0F')) {
+      return _emojiMap[emoji.replaceAll('\uFE0F', '')];
+    }
+    return null;
   }
+
+  static bool hasEmoji(String text) => text.contains(_emojiRegex);
+
+  static final RegExp _emojiRegex = RegExp(
+    (_emojiMap.keys.toList()..sort((a, b) => b.length.compareTo(a.length)))
+        .map(RegExp.escape)
+        .join('|'),
+  );
+
+  static RegExp get emojiRegex => _emojiRegex;
 
   static const List<List<String>> data = [
     [

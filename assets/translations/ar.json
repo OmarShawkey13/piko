@@ -64,5 +64,18 @@
   "delete_for_everyone": "حذف لدى الجميع",
   "yesterday": "أمس",
   "read_more": "قراءة المزيد",
-  "read_less": "قراءة أقل"
+  "read_less": "قراءة أقل",
+  "info": "تفاصيل",
+  "select": "تحديد",
+  "message_details": "تفاصيل الرسالة",
+  "sent": "أُرسلت",
+  "date": "التاريخ",
+  "read": "مقروءة",
+  "delivered": "مستلمة",
+  "close": "إغلاق",
+  "selected": "محدد",
+  "delete_messages": "حذف الرسائل",
+  "delete_confirm_count": "حذف",
+  "messages": "رسائل",
+  "status": "الحالة"
 }

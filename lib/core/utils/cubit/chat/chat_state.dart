@@ -1,17 +1,6 @@
-import 'package:piko/core/models/message_model.dart';
-
 abstract class ChatStates {}
 
 class ChatInitialState extends ChatStates {}
-
-class ChatMessagesLoadingState extends ChatStates {}
-
-class ChatMessagesSuccessState extends ChatStates {
-  final List<MessageModel> messages;
-  ChatMessagesSuccessState(this.messages);
-}
-
-class ChatBackgroundChangedState extends ChatStates {}
 
 class ChatSendSuccessState extends ChatStates {}
 
@@ -20,25 +9,36 @@ class ChatSendErrorState extends ChatStates {
   ChatSendErrorState(this.error);
 }
 
-class ChatUploadImageLoadingState extends ChatStates {}
-
-class ChatUploadImageSuccessState extends ChatStates {
-  final String imageUrl;
-  ChatUploadImageSuccessState(this.imageUrl);
-}
-
-class ChatUploadImageErrorState extends ChatStates {
-  final String error;
-  ChatUploadImageErrorState(this.error);
-}
-
-class TypingStatusChangedState extends ChatStates {}
-
 class ChatReplyingMessageChangedState extends ChatStates {}
+
+class ChatBackgroundChangedState extends ChatStates {}
 
 class ChatDeleteMessageSuccessState extends ChatStates {}
 
 class ChatDeleteMessageErrorState extends ChatStates {
   final String error;
   ChatDeleteMessageErrorState(this.error);
+}
+
+class ChatUrlDetectedState extends ChatStates {
+  final String? url;
+  ChatUrlDetectedState(this.url);
+}
+
+class ChatSelectionModeChangedState extends ChatStates {}
+
+class ChatSearchToggleState extends ChatStates {
+  final bool isSearchActive;
+  ChatSearchToggleState(this.isSearchActive);
+}
+
+class ChatSearchResultsUpdatedState extends ChatStates {
+  final List<String> resultIds;
+  final int currentIndex;
+  final String query;
+  ChatSearchResultsUpdatedState({
+    required this.resultIds,
+    required this.currentIndex,
+    required this.query,
+  });
 }

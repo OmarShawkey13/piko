@@ -1,4 +1,5 @@
 # Miscellaneous
+.aierules
 *.class
 *.log
 *.pyc

@@ -40,12 +40,18 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => sl<ChatCubit>()
-        ..loadChatBackground()
-        ..loadDraft(
-          otherId: widget.user.uid,
-          messageController: messageController,
-        ),
+      create: (context) {
+        final cubit = sl<ChatCubit>();
+        final myId = AuthCubit.get(context).currentUserModel?.uid;
+        if (myId != null) {
+          cubit.loadDraft(
+            myId: myId,
+            otherId: widget.user.uid,
+            messageController: messageController,
+          );
+        }
+        return cubit..loadChatBackground();
+      },
       child: BlocBuilder<AuthCubit, AuthStates>(
         buildWhen: (_, state) =>
             state is AuthGetUserLoadingState ||
@@ -56,56 +62,64 @@ class _ChatScreenState extends State<ChatScreen> {
           return ConditionalBuilder(
             loadingState: myUser == null,
             successBuilder: (context) {
-              final chatCubit = ChatCubit.get(context);
-              return Scaffold(
-                appBar: ChatAppBar(user: widget.user),
-                body: BlocBuilder<ChatCubit, ChatStates>(
-                  buildWhen: (_, state) => state is ChatBackgroundChangedState,
-                  builder: (context, state) {
-                    return Container(
-                      decoration: chatCubit.chatBackgroundBytes != null
-                          ? BoxDecoration(
-                              image: DecorationImage(
-                                image: MemoryImage(
-                                  chatCubit.chatBackgroundBytes!,
+              return PopScope(
+                canPop: !ChatCubit.get(context).isSelectionMode,
+                onPopInvokedWithResult: (didPop, result) {
+                  if (!didPop) {
+                    ChatCubit.get(context).clearSelection();
+                  }
+                },
+                child: Scaffold(
+                  appBar: ChatAppBar(user: widget.user),
+                  body: BlocBuilder<ChatCubit, ChatStates>(
+                    builder: (context, state) {
+                      final chatCubit = ChatCubit.get(context);
+                      return Container(
+                        decoration: chatCubit.chatBackgroundBytes != null
+                            ? BoxDecoration(
+                                image: DecorationImage(
+                                  image: MemoryImage(
+                                    chatCubit.chatBackgroundBytes!,
+                                  ),
+                                  fit: BoxFit.cover,
                                 ),
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : null,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: RepaintBoundary(
-                              child: MessagesList(
-                                myId: myUser!.uid,
-                                otherId: widget.user.uid,
+                              )
+                            : null,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: RepaintBoundary(
+                                child: MessagesList(
+                                  myId: myUser!.uid,
+                                  otherId: widget.user.uid,
+                                ),
                               ),
                             ),
-                          ),
-                          MessageInput(
-                            controller: messageController,
-                            isDark: themeCubit.isDarkMode,
-                            myId: myUser.uid,
-                            otherId: widget.user.uid,
-                            otherUser: widget.user,
-                            onSend: () {
-                              final text = messageController.text.trim();
-                              if (text.isEmpty) return;
-                              chatCubit.sendMessage(
+                            if (!chatCubit.isSelectionMode)
+                              MessageInput(
+                                controller: messageController,
+                                isDark: themeCubit.isDarkMode,
                                 myId: myUser.uid,
                                 otherId: widget.user.uid,
-                                text: text,
-                                myUser: myUser,
                                 otherUser: widget.user,
-                              );
-                              messageController.clear();
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                                onSend: () {
+                                  final text = messageController.text.trim();
+                                  if (text.isEmpty) return;
+                                  chatCubit.sendMessage(
+                                    myId: myUser.uid,
+                                    otherId: widget.user.uid,
+                                    text: text,
+                                    myUser: myUser,
+                                    otherUser: widget.user,
+                                  );
+                                  messageController.clear();
+                                },
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
               );
             },

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:piko/core/models/message_model.dart';
 import 'package:piko/core/theme/colors.dart';
+import 'package:piko/features/chat/presentation/widgets/link_preview_widget.dart';
+import 'package:piko/features/chat/presentation/widgets/message_bubble_image_group.dart';
 import 'package:piko/features/chat/presentation/widgets/message_bubble_image_only.dart';
 import 'package:piko/features/chat/presentation/widgets/message_bubble_media.dart';
 import 'package:piko/features/chat/presentation/widgets/message_bubble_text.dart';
@@ -9,6 +11,7 @@ import 'package:piko/features/chat/presentation/widgets/reply_preview.dart';
 
 class MessageBubbleContent extends StatelessWidget {
   final MessageModel msg;
+  final List<MessageModel>? imageGroup;
   final bool isMe;
   final bool isImageOnly;
   final void Function(String)? onReplyTap;
@@ -16,10 +19,20 @@ class MessageBubbleContent extends StatelessWidget {
   const MessageBubbleContent({
     super.key,
     required this.msg,
+    this.imageGroup,
     required this.isMe,
     required this.isImageOnly,
     this.onReplyTap,
   });
+
+  String? _extractUrl(String text) {
+    final urlRegex = RegExp(
+      r'(https?:\/\/[^\s]+)',
+      caseSensitive: false,
+    );
+    final match = urlRegex.firstMatch(text);
+    return match?.group(0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +44,17 @@ class MessageBubbleContent extends StatelessWidget {
     );
 
     if (isImageOnly) {
+      if (imageGroup != null && imageGroup!.length > 1) {
+        return MessageBubbleImageGroup(
+          images: imageGroup!,
+          isMe: isMe,
+          radius: radius,
+        );
+      }
       return MessageBubbleImageOnly(msg: msg, isMe: isMe, radius: radius);
     }
+
+    final url = _extractUrl(msg.text);
 
     return Container(
       decoration: BoxDecoration(
@@ -63,8 +85,12 @@ class MessageBubbleContent extends StatelessWidget {
             ),
           if (msg.imageUrl != null || msg.localPath != null)
             MessageBubbleMedia(msg: msg),
+
+          if (url != null) LinkPreviewWidget(url: url, isMe: isMe),
+
           if (msg.text.trim().isNotEmpty)
             MessageBubbleText(text: msg.text, isMe: isMe),
+
           MessageBubbleFooter(msg: msg, isMe: isMe),
         ],
       ),

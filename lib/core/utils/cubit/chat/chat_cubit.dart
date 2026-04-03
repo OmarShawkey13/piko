@@ -13,8 +13,9 @@ import 'package:piko/core/models/message_model.dart';
 import 'package:piko/core/models/user_model.dart';
 import 'package:piko/core/network/local/cache_helper.dart';
 import 'package:piko/core/network/service/notification_service.dart';
-import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
+import 'package:piko/core/network/local/sqflite_helper.dart';
 import 'package:piko/core/utils/cubit/chat/chat_state.dart';
+import 'package:rxdart/rxdart.dart';
 
 class ChatCubit extends Cubit<ChatStates> {
   ChatCubit() : super(ChatInitialState());
@@ -23,6 +24,123 @@ class ChatCubit extends Cubit<ChatStates> {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ImagePicker _picker = ImagePicker();
+
+  // Selection Mode
+  bool isSelectionMode = false;
+  final List<MessageModel> selectedMessages = [];
+
+  // Search Mode
+  bool isSearchActive = false;
+  String searchQuery = "";
+  List<String> searchResultIds = [];
+  int currentSearchIndex = -1;
+  List<MessageModel> currentMessages = [];
+
+  void updateCurrentMessages(List<MessageModel> messages) {
+    currentMessages = messages;
+  }
+
+  void toggleSearch() {
+    isSearchActive = !isSearchActive;
+    if (!isSearchActive) {
+      searchQuery = "";
+      searchResultIds = [];
+      currentSearchIndex = -1;
+    }
+    emit(ChatSearchToggleState(isSearchActive));
+  }
+
+  void searchMessages(String query) {
+    searchQuery = query.trim().toLowerCase();
+    if (searchQuery.isEmpty) {
+      searchResultIds = [];
+      currentSearchIndex = -1;
+      emit(
+        ChatSearchResultsUpdatedState(
+          resultIds: [],
+          currentIndex: -1,
+          query: "",
+        ),
+      );
+      return;
+    }
+
+    searchResultIds = currentMessages
+        .where((msg) => msg.text.toLowerCase().contains(searchQuery))
+        .map((msg) => msg.id)
+        .toList(); // No need to reverse here if we want index 0 to be the "first" found in chronological order or vice versa.
+    // However, the ListView is reversed: true, meaning the bottom is index 0 in the list but last in the data.
+    // currentMessages is in chronological order (descending: false in stream).
+    // So currentMessages[0] is the OLDEST message.
+    // In searchResultIds, we want 0 to be the LATEST message found if we want to start from the bottom.
+    // So let's reverse searchResultIds.
+    searchResultIds = searchResultIds.reversed.toList();
+
+    if (searchResultIds.isNotEmpty) {
+      currentSearchIndex = 0;
+    } else {
+      currentSearchIndex = -1;
+    }
+
+    emit(
+      ChatSearchResultsUpdatedState(
+        resultIds: searchResultIds,
+        currentIndex: currentSearchIndex,
+        query: searchQuery,
+      ),
+    );
+  }
+
+  void nextSearchResult() {
+    if (searchResultIds.isEmpty) return;
+    currentSearchIndex = (currentSearchIndex + 1) % searchResultIds.length;
+    emit(
+      ChatSearchResultsUpdatedState(
+        resultIds: searchResultIds,
+        currentIndex: currentSearchIndex,
+        query: searchQuery,
+      ),
+    );
+  }
+
+  void previousSearchResult() {
+    if (searchResultIds.isEmpty) return;
+    currentSearchIndex =
+        (currentSearchIndex - 1 + searchResultIds.length) %
+        searchResultIds.length;
+    emit(
+      ChatSearchResultsUpdatedState(
+        resultIds: searchResultIds,
+        currentIndex: currentSearchIndex,
+        query: searchQuery,
+      ),
+    );
+  }
+
+  void toggleSelectionMode({MessageModel? initialMessage}) {
+    isSelectionMode = !isSelectionMode;
+    selectedMessages.clear();
+    if (isSelectionMode && initialMessage != null) {
+      selectedMessages.add(initialMessage);
+    }
+    emit(ChatSelectionModeChangedState());
+  }
+
+  void toggleMessageSelection(MessageModel message) {
+    if (selectedMessages.any((m) => m.id == message.id)) {
+      selectedMessages.removeWhere((m) => m.id == message.id);
+      if (selectedMessages.isEmpty) isSelectionMode = false;
+    } else {
+      selectedMessages.add(message);
+    }
+    emit(ChatSelectionModeChangedState());
+  }
+
+  void clearSelection() {
+    isSelectionMode = false;
+    selectedMessages.clear();
+    emit(ChatSelectionModeChangedState());
+  }
 
   // Chat Background
   Uint8List? chatBackgroundBytes;
@@ -155,7 +273,6 @@ class ChatCubit extends Cubit<ChatStates> {
         .collection("chats")
         .doc(otherId);
 
-    // Save only for me if uploading
     await myChatRef.collection("messages").doc(messageId).set(messageData);
 
     await myChatRef.set({
@@ -194,16 +311,13 @@ class ChatCubit extends Cubit<ChatStates> {
         .doc(otherId)
         .collection("chats")
         .doc(myId);
-
     final batch = _firestore.batch();
 
-    // Ensure isUploading is false and localPath is null for the receiver
-    final finalData = Map<String, dynamic>.from(messageData);
-    finalData["isUploading"] = false;
-    finalData["localPath"] = null;
+    final finalData = Map<String, dynamic>.from(messageData)
+      ..["isUploading"] = false
+      ..["localPath"] = null;
 
     batch.set(otherChatRef.collection("messages").doc(messageId), finalData);
-
     batch.set(otherChatRef, {
       "uid": myId,
       "displayName": myUser.displayName,
@@ -220,18 +334,26 @@ class ChatCubit extends Cubit<ChatStates> {
     await batch.commit();
 
     if (otherUser.uid.isNotEmpty) {
-      await NotificationService.sendOneSignalMessage(
-        externalId: otherUser.uid,
-        title: myUser.displayName,
-        body: finalData["text"].isEmpty
-            ? "Sent an attachment"
-            : finalData["text"],
+      unawaited(
+        NotificationService.sendOneSignalMessage(
+          externalId: otherUser.uid,
+          title: myUser.displayName,
+          body: finalData["text"].isEmpty
+              ? "Sent an attachment"
+              : finalData["text"],
+        ),
       );
     }
   }
 
   Stream<List<MessageModel>> getMessagesStream(String myId, String otherId) {
-    return _firestore
+    // 1. Get cached messages from SQLite
+    final localStream = Stream.fromFuture(
+      SqfliteHelper.getMessages(myId, otherId),
+    );
+
+    // 2. Get real-time messages from Firestore
+    final remoteStream = _firestore
         .collection("users")
         .doc(myId)
         .collection("chats")
@@ -239,11 +361,20 @@ class ChatCubit extends Cubit<ChatStates> {
         .collection("messages")
         .orderBy("timestamp", descending: false)
         .snapshots()
-        .map(
-          (snap) => snap.docs
+        .map((snap) {
+          final messages = snap.docs
               .map((doc) => MessageModel.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+              .toList();
+
+          // 3. Cache messages as they arrive from Firestore
+          for (var msg in messages) {
+            SqfliteHelper.insertMessage(msg);
+          }
+          return messages;
+        });
+
+    // Merge both streams: show local immediately, then update with remote
+    return MergeStream([localStream, remoteStream]);
   }
 
   Future<void> markAllMessagesAsSeen(
@@ -270,19 +401,17 @@ class ChatCubit extends Cubit<ChatStates> {
 
       batch.update(myMsgRef, {"seen": true});
 
-      // Only update other if it exists (might not if still uploading)
       final otherDoc = await otherMsgRef.get();
-      if (otherDoc.exists) {
-        batch.update(otherMsgRef, {"seen": true});
-      }
+      if (otherDoc.exists) batch.update(otherMsgRef, {"seen": true});
 
-      final myChatPreviewRef = _firestore
-          .collection("users")
-          .doc(myId)
-          .collection("chats")
-          .doc(otherId);
-      batch.update(myChatPreviewRef, {"unreadCount": 0});
-
+      batch.update(
+        _firestore
+            .collection("users")
+            .doc(myId)
+            .collection("chats")
+            .doc(otherId),
+        {"unreadCount": 0},
+      );
       await batch.commit();
     } catch (e) {
       debugPrint("Error marking messages as seen: $e");
@@ -296,29 +425,46 @@ class ChatCubit extends Cubit<ChatStates> {
     required bool deleteForEveryone,
   }) async {
     try {
-      // 1. Handle deletion for me
       await _handleSingleDeletion(
         ownerId: myId,
         otherId: otherId,
         messageId: messageId,
       );
-
       if (deleteForEveryone) {
-        // 2. Handle deletion for other
         await _handleSingleDeletion(
           ownerId: otherId,
           otherId: myId,
           messageId: messageId,
         );
       }
-
       emit(ChatDeleteMessageSuccessState());
     } catch (e) {
       emit(ChatDeleteMessageErrorState(e.toString()));
     }
   }
 
-  // الجزء المطور من كود الحذف في ChatCubit.dart
+  Future<void> deleteSelectedMessages({
+    required String myId,
+    required String otherId,
+    required bool deleteForEveryone,
+  }) async {
+    try {
+      final ids = selectedMessages.map((m) => m.id).toList();
+      clearSelection();
+      await Future.wait(
+        ids.map(
+          (id) => deleteMessage(
+            myId: myId,
+            otherId: otherId,
+            messageId: id,
+            deleteForEveryone: deleteForEveryone,
+          ),
+        ),
+      );
+    } catch (e) {
+      emit(ChatDeleteMessageErrorState(e.toString()));
+    }
+  }
 
   Future<void> _handleSingleDeletion({
     required String ownerId,
@@ -330,49 +476,26 @@ class ChatCubit extends Cubit<ChatStates> {
         .doc(ownerId)
         .collection("chats")
         .doc(otherId);
-
-    // 1. الحصول على بيانات الرسالة قبل حذفها للتحقق من الحالة
     final msgDoc = await chatRef.collection("messages").doc(messageId).get();
-    bool wasUnseen = false;
+
     if (msgDoc.exists) {
       final data = msgDoc.data()!;
-      // إذا كانت الرسالة مستلمة ولم تُقرأ بعد
-      wasUnseen = data['seen'] == false && data['senderId'] != ownerId;
-    }
-
-    // 2. حذف الرسالة فعلياً من المجموعة الفرعية
-    await chatRef.collection("messages").doc(messageId).delete();
-
-    // 3. تحديث عداد الرسائل غير المقروءة إذا لزم الأمر
-    if (wasUnseen) {
-      final chatSnap = await chatRef.get();
-      if (chatSnap.exists) {
-        final count = chatSnap.data()?['unreadCount'] ?? 0;
-        if (count > 0) {
-          await chatRef.update({'unreadCount': FieldValue.increment(-1)});
-        }
+      if (data['seen'] == false && data['senderId'] != ownerId) {
+        await chatRef.update({'unreadCount': FieldValue.increment(-1)});
       }
+      await chatRef.collection("messages").doc(messageId).delete();
     }
 
-    // 4. مزامنة ملخص الشات (الرسالة الأخيرة، التوقيت)
-    // نجلب آخر رسالتين للتأكد من أننا لا نأخذ الرسالة التي حذفناها للتو (في حال تأخر تحديث الفهرس)
-    final lastMessagesQuery = await chatRef
+    final lastMsgs = await chatRef
         .collection("messages")
         .orderBy("timestamp", descending: true)
-        .limit(2)
+        .limit(1)
         .get();
 
-    // تصفية النتائج لاستبعاد الرسالة المحذوفة
-    final List<QueryDocumentSnapshot> remainingDocs = lastMessagesQuery.docs
-        .where((doc) => doc.id != messageId)
-        .toList();
-
-    if (remainingDocs.isEmpty) {
-      // لا توجد رسائل متبقية -> حذف ملخص المحادثة بالكامل لتختفي من القائمة
+    if (lastMsgs.docs.isEmpty) {
       await chatRef.delete();
     } else {
-      // توجد رسائل متبقية -> تحديث الملخص بأحدث رسالة فعلية موجودة
-      final newLastMsg = remainingDocs.first.data() as Map<String, dynamic>;
+      final newLastMsg = lastMsgs.docs.first.data();
       await chatRef.update({
         'lastMessage': (newLastMsg["text"] as String?)?.isEmpty == true
             ? "Attachment"
@@ -383,7 +506,6 @@ class ChatCubit extends Cubit<ChatStates> {
     }
   }
 
-  // Typing Status
   Stream<bool> getTypingStatus(String myId, String otherId) {
     return _firestore
         .collection("users")
@@ -407,20 +529,18 @@ class ChatCubit extends Cubit<ChatStates> {
         .set({"isTyping": isTyping}, SetOptions(merge: true));
   }
 
-  // Media Pick & Upload
   Future<List<XFile>> pickMediaFiles({
     required ImageSource source,
     bool isVideo = false,
   }) async {
     try {
       if (source == ImageSource.camera) {
-        final XFile? file = isVideo
+        final file = isVideo
             ? await _picker.pickVideo(source: ImageSource.camera)
             : await _picker.pickImage(source: ImageSource.camera);
         return file != null ? [file] : [];
-      } else {
-        return await _picker.pickMultipleMedia();
       }
+      return await _picker.pickMultipleMedia();
     } catch (e) {
       debugPrint("Pick media error: $e");
       return [];
@@ -438,9 +558,13 @@ class ChatCubit extends Cubit<ChatStates> {
       final size = _formatBytes(await file.length(), 1);
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final messageId = _firestore.collection("users").doc().id;
+      final myChatRef = _firestore
+          .collection("users")
+          .doc(myId)
+          .collection("chats")
+          .doc(otherId);
 
-      // 1. Show message locally immediately
-      final localMessageData = {
+      await myChatRef.collection("messages").doc(messageId).set({
         "senderId": myId,
         "receiverId": otherId,
         "text": "",
@@ -450,36 +574,25 @@ class ChatCubit extends Cubit<ChatStates> {
         "fileSize": size,
         "isUploading": true,
         "localPath": file.path,
-      };
+      });
 
-      final myChatRef = _firestore
-          .collection("users")
-          .doc(myId)
-          .collection("chats")
-          .doc(otherId);
-
-      await myChatRef
-          .collection("messages")
-          .doc(messageId)
-          .set(localMessageData);
-
-      // Update preview
       await myChatRef.set({
         "uid": otherId,
         "lastMessage": "Attachment",
         "timestamp": timestamp,
       }, SetOptions(merge: true));
 
-      // 2. Start background upload
-      _performBackgroundUpload(
-        file: File(file.path),
-        messageId: messageId,
-        myId: myId,
-        otherId: otherId,
-        myUser: myUser,
-        otherUser: otherUser,
-        size: size,
-        timestamp: timestamp,
+      unawaited(
+        _performBackgroundUpload(
+          file: File(file.path),
+          messageId: messageId,
+          myId: myId,
+          otherId: otherId,
+          myUser: myUser,
+          otherUser: otherUser,
+          size: size,
+          timestamp: timestamp,
+        ),
       );
     }
   }
@@ -496,7 +609,6 @@ class ChatCubit extends Cubit<ChatStates> {
   }) async {
     try {
       final url = await _uploadToCloudinary(file);
-
       final messageData = {
         "senderId": myId,
         "receiverId": otherId,
@@ -509,7 +621,6 @@ class ChatCubit extends Cubit<ChatStates> {
         "localPath": null,
       };
 
-      // Update for me
       await _firestore
           .collection("users")
           .doc(myId)
@@ -518,8 +629,6 @@ class ChatCubit extends Cubit<ChatStates> {
           .collection("messages")
           .doc(messageId)
           .set(messageData);
-
-      // Finalize for other
       await _finalizeMessageForOther(
         messageId: messageId,
         messageData: messageData,
@@ -530,7 +639,6 @@ class ChatCubit extends Cubit<ChatStates> {
       );
     } catch (e) {
       debugPrint("Upload failed: $e");
-      // Optionally update local message to show error
     }
   }
 
@@ -547,10 +655,8 @@ class ChatCubit extends Cubit<ChatStates> {
     final isVideo =
         file.path.toLowerCase().endsWith(".mp4") ||
         file.path.toLowerCase().endsWith(".mov");
-    final resourceType = isVideo ? "video" : "image";
-
     final uri = Uri.parse(
-      "https://api.cloudinary.com/v1_1/$cloudName/$resourceType/upload",
+      "https://api.cloudinary.com/v1_1/$cloudName/${isVideo ? "video" : "image"}/upload",
     );
 
     final request = http.MultipartRequest("POST", uri)
@@ -559,11 +665,43 @@ class ChatCubit extends Cubit<ChatStates> {
 
     final response = await request.send();
     final result = await response.stream.bytesToString();
-    final jsonData = json.decode(result);
-    return jsonData["secure_url"];
+    return json.decode(result)["secure_url"];
   }
 
-  // Drafts
+  String? detectedUrl;
+  Timer? _urlDebounceTimer;
+  static final _urlRegex = RegExp(
+    r'((https?:\/\/)|(www\.))[^\s]+',
+    caseSensitive: false,
+  );
+
+  void detectUrl(String text) {
+    _urlDebounceTimer?.cancel();
+    _urlDebounceTimer = Timer(const Duration(milliseconds: 600), () {
+      if (text.trim().isEmpty) {
+        if (detectedUrl != null) {
+          detectedUrl = null;
+          emit(ChatUrlDetectedState(null));
+        }
+        return;
+      }
+      var rawUrl = _urlRegex.firstMatch(text)?.group(0);
+      if (rawUrl != null) {
+        rawUrl = rawUrl.replaceAll(RegExp(r'[.,!?]+$'), '');
+        if (rawUrl.toLowerCase().startsWith('www.')) rawUrl = 'https://$rawUrl';
+      }
+      if (rawUrl != detectedUrl) {
+        detectedUrl = rawUrl;
+        emit(ChatUrlDetectedState(rawUrl));
+      }
+    });
+  }
+
+  void clearDetectedUrl() {
+    detectedUrl = null;
+    emit(ChatUrlDetectedState(null));
+  }
+
   Timer? _draftTimer;
 
   void updateDraft(String myId, String otherId, String text) {
@@ -582,21 +720,25 @@ class ChatCubit extends Cubit<ChatStates> {
   }
 
   Future<void> loadDraft({
+    required String myId,
     required String otherId,
     required TextEditingController messageController,
   }) async {
-    final uid = authCubit.currentUserModel?.uid;
-    if (uid == null) return;
-
     final doc = await _firestore
         .collection("users")
-        .doc(uid)
+        .doc(myId)
         .collection("chats")
         .doc(otherId)
         .get();
-
     if (doc.exists && doc.data()?["draft"] != null) {
       messageController.text = doc.data()!["draft"];
     }
+  }
+
+  @override
+  Future<void> close() {
+    _urlDebounceTimer?.cancel();
+    _draftTimer?.cancel();
+    return super.close();
   }
 }

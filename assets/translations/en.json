@@ -64,5 +64,18 @@
   "delete_for_everyone": "Delete for everyone",
   "yesterday": "Yesterday",
   "read_more": "Read more",
-  "read_less": "Read less"
+  "read_less": "Read less",
+  "info": "Info",
+  "select": "Select",
+  "message_details": "Message Details",
+  "sent": "Sent",
+  "date": "Date",
+  "read": "Read",
+  "delivered": "Delivered",
+  "close": "Close",
+  "selected": "selected",
+  "delete_messages": "Delete Messages",
+  "delete_confirm_count": "Delete",
+  "messages": "messages",
+  "status": "Status"
 }

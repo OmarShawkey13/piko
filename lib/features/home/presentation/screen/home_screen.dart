@@ -30,24 +30,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     authCubit.getUserData().then((_) {
-      homeCubit.setOnlineStatus(true);
+      final myId = authCubit.currentUserModel?.uid;
+      if (myId != null) homeCubit.setOnlineStatus(myId, true);
     });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    homeCubit.setOnlineStatus(false);
+    final myId = authCubit.currentUserModel?.uid;
+    if (myId != null) homeCubit.setOnlineStatus(myId, false);
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    final myId = authCubit.currentUserModel?.uid;
+    if (myId == null) return;
+
     if (state == AppLifecycleState.resumed) {
-      homeCubit.setOnlineStatus(true);
+      homeCubit.setOnlineStatus(myId, true);
     } else {
-      homeCubit.setOnlineStatus(false);
+      homeCubit.setOnlineStatus(myId, false);
     }
   }
 

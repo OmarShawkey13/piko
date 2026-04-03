@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:piko/core/models/message_model.dart';
 import 'package:piko/core/theme/colors.dart';
+import 'package:piko/core/theme/emoji_text.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/cubit/chat/chat_cubit.dart';
 
@@ -86,14 +87,14 @@ class ReplyPreview extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    displaySender,
+                  EmojiText(
+                    text: displaySender,
                     style: TextStylesManager.bold12.copyWith(
                       color: accentColor,
                     ),
                   ),
-                  Text(
-                    displayText,
+                  EmojiText(
+                    text: displayText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStylesManager.regular12.copyWith(

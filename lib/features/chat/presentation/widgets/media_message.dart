@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:piko/core/models/message_model.dart';
 import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/utils/constants/primary/loading_indicator.dart';
 import 'package:piko/features/chat/presentation/widgets/blurred_image_background.dart';
@@ -15,6 +16,11 @@ class MediaMessage extends StatefulWidget {
   final String messageId;
   final bool isUploading;
   final String? localPath;
+  final double? width;
+  final double? height;
+  final List<MessageModel>? allMessages;
+  final int? currentIndex;
+  final bool useHero;
 
   const MediaMessage({
     super.key,
@@ -23,6 +29,11 @@ class MediaMessage extends StatefulWidget {
     required this.messageId,
     this.isUploading = false,
     this.localPath,
+    this.width,
+    this.height,
+    this.allMessages,
+    this.currentIndex,
+    this.useHero = true,
   });
 
   @override
@@ -153,17 +164,30 @@ class _MediaMessageState extends State<MediaMessage> {
   }
 
   void _navigateToPreview() {
-    if (_localFile != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute<Object>(
-          builder: (_) => ImagePreviewPage(
-            imagePath: _localFile!.path,
-            heroTag: widget.imageUrl ?? widget.messageId,
+    final messagesToPreview =
+        widget.allMessages ??
+        [
+          MessageModel(
+            id: widget.messageId,
+            senderId: "",
+            receiverId: "",
+            text: "",
+            imageUrl: widget.imageUrl,
+            timestamp: 0,
+            seen: true,
+            localPath: widget.localPath,
           ),
+        ];
+
+    Navigator.push(
+      context,
+      MaterialPageRoute<Object>(
+        builder: (_) => ImagePreviewPage(
+          messages: messagesToPreview,
+          initialIndex: widget.currentIndex ?? 0,
         ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -180,52 +204,76 @@ class _MediaMessageState extends State<MediaMessage> {
   }
 
   Widget _buildLocalImage() {
+    final double width = widget.width ?? _kImageSize;
+    final double height = widget.height ?? _kImageSize;
+
+    final imageWidget = Stack(
+      alignment: Alignment.center,
+      children: [
+        Image.file(
+          _localFile!,
+          fit: BoxFit.cover,
+          width: width,
+          height: height,
+          cacheWidth: 500,
+          cacheHeight: 500,
+          errorBuilder: (_, _, _) => MediaPlaceholder(
+            width: width,
+            height: height,
+          ),
+        ),
+        if (widget.isUploading)
+          _buildOverlay(
+            const LoadingIndicator(color: ColorsManager.primary),
+            width,
+            height,
+          ),
+      ],
+    );
+
     return GestureDetector(
       onTap: _navigateToPreview,
-      child: Hero(
-        tag: widget.imageUrl ?? widget.messageId,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Image.file(
-              _localFile!,
-              fit: BoxFit.cover,
-              width: _kImageSize,
-              height: _kImageSize,
-              cacheWidth: 500,
-              cacheHeight: 500,
-              errorBuilder: (_, _, _) =>
-                  const MediaPlaceholder(size: _kImageSize),
-            ),
-            if (widget.isUploading)
-              _buildOverlay(
-                const LoadingIndicator(color: ColorsManager.primary),
-              ),
-          ],
-        ),
-      ),
+      child: widget.useHero
+          ? Hero(
+              tag: widget.messageId,
+              child: imageWidget,
+            )
+          : imageWidget,
     );
   }
 
   Widget _buildNetworkImage() {
+    final double width = widget.width ?? _kImageSize;
+    final double height = widget.height ?? _kImageSize;
+    final imageWidget = Stack(
+      alignment: Alignment.center,
+      children: [
+        BlurredImageBackground(
+          imageUrl: widget.imageUrl!,
+          width: width,
+          height: height,
+        ),
+        if (!_isDownloading) MediaDownloadButton(fileSize: widget.fileSize),
+        if (_isDownloading)
+          MediaDownloadProgress(progressNotifier: _progressNotifier),
+      ],
+    );
+
     return GestureDetector(
       onTap: _isDownloading ? null : _downloadFile,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          BlurredImageBackground(imageUrl: widget.imageUrl!, size: _kImageSize),
-          if (!_isDownloading) MediaDownloadButton(fileSize: widget.fileSize),
-          if (_isDownloading)
-            MediaDownloadProgress(progressNotifier: _progressNotifier),
-        ],
-      ),
+      child: widget.useHero
+          ? Hero(
+              tag: widget.messageId,
+              child: imageWidget,
+            )
+          : imageWidget,
     );
   }
 
-  Widget _buildOverlay(Widget child) {
+  Widget _buildOverlay(Widget child, double width, double height) {
     return Container(
-      width: _kImageSize,
-      height: _kImageSize,
+      width: width,
+      height: height,
       color: Colors.black.withValues(alpha: 0.3),
       child: Center(child: child),
     );

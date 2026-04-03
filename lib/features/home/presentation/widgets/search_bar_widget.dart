@@ -3,6 +3,7 @@ import 'package:piko/core/theme/colors.dart';
 import 'package:piko/core/theme/text_styles.dart';
 import 'package:piko/core/utils/constants/constants.dart';
 import 'package:piko/core/utils/constants/primary/primary_text_form_field.dart';
+import 'package:piko/core/utils/cubit/auth/auth_cubit.dart';
 import 'package:piko/core/utils/cubit/home/home_cubit.dart';
 
 class SearchBarWidget extends StatelessWidget {
@@ -19,9 +20,10 @@ class SearchBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final myId = authCubit.currentUserModel?.uid ?? "";
     return PrimaryTextFormField(
       controller: controller,
-      onChanged: (value) => homeCubit.searchUsername(value),
+      onChanged: (value) => homeCubit.searchUsername(value, myId),
       style: TextStylesManager.medium16.copyWith(
         color: isDark ? Colors.white : ColorsManager.lightTextPrimary,
       ),

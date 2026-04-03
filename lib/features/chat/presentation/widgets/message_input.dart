@@ -15,6 +15,7 @@ import 'package:piko/features/chat/presentation/widgets/attachment_menu.dart';
 import 'package:piko/features/chat/presentation/widgets/emoji_picker/emoji_picker.dart';
 import 'package:piko/features/chat/presentation/widgets/reply_preview.dart';
 import 'package:piko/features/chat/presentation/widgets/send_button.dart';
+import 'package:piko/features/chat/presentation/widgets/link_preview_widget.dart';
 
 class MessageInput extends StatefulWidget {
   final TextEditingController controller;
@@ -55,11 +56,15 @@ class _MessageInputState extends State<MessageInput> {
   }
 
   void _onTextChanged() {
-    if (widget.controller.text.trim().isEmpty != isTextEmpty) {
-      setState(() {
-        isTextEmpty = widget.controller.text.trim().isEmpty;
-      });
+    final text = widget.controller.text;
+    final bool isEmpty = text.trim().isEmpty;
+
+    if (isEmpty != isTextEmpty) {
+      setState(() => isTextEmpty = isEmpty);
     }
+
+    // نقل منطق اكتشاف الروابط إلى الـ Cubit لمنع التهنيج
+    ChatCubit.get(context).detectUrl(text);
   }
 
   @override
@@ -140,143 +145,190 @@ class _MessageInputState extends State<MessageInput> {
   Widget build(BuildContext context) {
     final bool isDark = widget.isDark;
     final chatCubit = ChatCubit.get(context);
-    return BlocBuilder<ChatCubit, ChatStates>(
-      buildWhen: (_, state) => state is ChatReplyingMessageChangedState,
-      builder: (context, state) {
-        final replyingMessage = chatCubit.replyingMessage;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: ColorsManager.cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(
-                              alpha: isDark ? 0.3 : 0.08,
-                            ),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: ColorsManager.cardColor,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.3 : 0.08,
+                        ),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (replyingMessage != null)
-                            ReplyPreview(
-                              replyingMessage: replyingMessage,
-                              isDark: isDark,
-                              myId: widget.myId,
-                              otherDisplayName: widget.otherUser.displayName,
-                            ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              IconButton(
-                                onPressed: toggleEmojiPicker,
-                                icon: Icon(
-                                  isEmojiVisible
-                                      ? Icons.keyboard_rounded
-                                      : Icons.emoji_emotions_outlined,
-                                  color: ColorsManager.primary,
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // جزء الـ Reply
+                      BlocBuilder<ChatCubit, ChatStates>(
+                        buildWhen: (_, state) =>
+                            state is ChatReplyingMessageChangedState,
+                        builder: (context, state) {
+                          final replyingMessage = chatCubit.replyingMessage;
+                          if (replyingMessage == null) {
+                            return const SizedBox.shrink();
+                          }
+                          return ReplyPreview(
+                            replyingMessage: replyingMessage,
+                            isDark: isDark,
+                            myId: widget.myId,
+                            otherDisplayName: widget.otherUser.displayName,
+                          );
+                        },
+                      ),
+
+                      // جزء الـ Link Preview - محسّن لمنع التهنيج
+                      BlocBuilder<ChatCubit, ChatStates>(
+                        buildWhen: (_, state) => state is ChatUrlDetectedState,
+                        builder: (context, state) {
+                          final detectedUrl = chatCubit.detectedUrl;
+                          if (detectedUrl == null) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Container(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Stack(
+                              children: [
+                                LinkPreviewWidget(
+                                  url: detectedUrl,
+                                  isMe: true,
+                                  compact: true,
                                 ),
-                              ),
-                              Expanded(
-                                child: PrimaryTextFormField(
-                                  controller: widget.controller,
-                                  focusNode: inputFocusNode,
-                                  minLines: 1,
-                                  maxLines: 5,
-                                  style: TextStylesManager.regular14.copyWith(
-                                    color: isDark
-                                        ? ColorsManager.darkTextPrimary
-                                        : ColorsManager.lightTextPrimary,
-                                  ),
-                                  onChanged: (value) {
-                                    chatCubit.updateDraft(
-                                      widget.myId,
-                                      widget.otherId,
-                                      value,
-                                    );
-                                    chatCubit.setTypingStatus(
-                                      myId: widget.myId,
-                                      otherId: widget.otherId,
-                                      isTyping: value.trim().isNotEmpty,
-                                    );
-                                  },
-                                  hintText: appTranslation().get(
-                                    "message_hint",
-                                  ),
-                                  hintStyle: TextStylesManager.regular14
-                                      .copyWith(
-                                        color: isDark
-                                            ? ColorsManager.darkTextSecondary
-                                            : ColorsManager.lightTextSecondary,
+                                Positioned(
+                                  top: 8,
+                                  right: 12,
+                                  child: GestureDetector(
+                                    onTap: () => chatCubit.clearDetectedUrl(),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
                                       ),
-                                  filled: false,
-                                  fillColor: ColorsManager.cardColor,
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 12,
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
                                 ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            onPressed: toggleEmojiPicker,
+                            icon: Icon(
+                              isEmojiVisible
+                                  ? Icons.keyboard_rounded
+                                  : Icons.emoji_emotions_outlined,
+                              color: ColorsManager.primary,
+                            ),
+                          ),
+                          Expanded(
+                            child: PrimaryTextFormField(
+                              controller: widget.controller,
+                              focusNode: inputFocusNode,
+                              minLines: 1,
+                              maxLines: 5,
+                              style: TextStylesManager.regular14.copyWith(
+                                color: isDark
+                                    ? ColorsManager.darkTextPrimary
+                                    : ColorsManager.lightTextPrimary,
                               ),
-                              IconButton(
-                                onPressed: () => _showAttachmentMenu(context),
-                                icon: Icon(
-                                  Icons.add_circle_outline_rounded,
-                                  color: isDark
-                                      ? ColorsManager.darkTextSecondary
-                                      : ColorsManager.lightTextSecondary,
-                                ),
+                              onChanged: (value) {
+                                chatCubit.updateDraft(
+                                  widget.myId,
+                                  widget.otherId,
+                                  value,
+                                );
+                                chatCubit.setTypingStatus(
+                                  myId: widget.myId,
+                                  otherId: widget.otherId,
+                                  isTyping: value.trim().isNotEmpty,
+                                );
+                              },
+                              hintText: appTranslation().get("message_hint"),
+                              hintStyle: TextStylesManager.regular14.copyWith(
+                                color: isDark
+                                    ? ColorsManager.darkTextSecondary
+                                    : ColorsManager.lightTextSecondary,
                               ),
-                            ],
+                              filled: false,
+                              fillColor: ColorsManager.cardColor,
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => _showAttachmentMenu(context),
+                            icon: Icon(
+                              Icons.add_circle_outline_rounded,
+                              color: isDark
+                                  ? ColorsManager.darkTextSecondary
+                                  : ColorsManager.lightTextSecondary,
+                            ),
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ),
-                  horizontalSpace10,
-                  SendButton(
-                    isDark: isDark,
-                    isTextEmpty: isTextEmpty,
-                    onTap: () {
-                      if (!isTextEmpty) {
-                        chatCubit.setTypingStatus(
-                          myId: widget.myId,
-                          otherId: widget.otherId,
-                          isTyping: false,
-                        );
-                        widget.onSend();
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-            if (isEmojiVisible)
-              SizedBox(
-                height: 320,
-                child: EmojiPicker(
-                  onEmojiSelected: (emoji) {
-                    widget.controller.text += emoji;
-                    widget.controller.selection = TextSelection.fromPosition(
-                      TextPosition(offset: widget.controller.text.length),
-                    );
-                  },
                 ),
               ),
-          ],
-        );
-      },
+              horizontalSpace10,
+              SendButton(
+                isDark: isDark,
+                isTextEmpty: isTextEmpty,
+                onTap: () {
+                  if (!isTextEmpty) {
+                    chatCubit.setTypingStatus(
+                      myId: widget.myId,
+                      otherId: widget.otherId,
+                      isTyping: false,
+                    );
+                    widget.onSend();
+                    chatCubit.clearDetectedUrl();
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        if (isEmojiVisible)
+          SizedBox(
+            height: 320,
+            child: EmojiPicker(
+              onEmojiSelected: (emoji) {
+                widget.controller.text += emoji;
+                widget.controller.selection = TextSelection.fromPosition(
+                  TextPosition(offset: widget.controller.text.length),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 }
